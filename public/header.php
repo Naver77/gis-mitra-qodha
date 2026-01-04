@@ -28,6 +28,14 @@
         }
         * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         
+        /* Global body padding untuk navbar fixed */
+        body {
+            padding-top: 64px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
         /* Glassmorphism navbar */
         nav {
             position: fixed;

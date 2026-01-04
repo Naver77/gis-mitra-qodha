@@ -15,7 +15,6 @@
         display: flex;
         flex-direction: column;
         background: white;
-        padding-top: 64px;
     }
 
     /* Fixed navbar at top */
