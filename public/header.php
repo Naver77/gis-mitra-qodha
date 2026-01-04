@@ -30,7 +30,7 @@
         
         /* Global body padding untuk navbar fixed */
         body {
-            padding-top: 64px;
+            padding-top: 73px;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -51,9 +51,14 @@
                         0 8px 16px rgba(0, 0, 0, 0.04);
         }
 
+        /* Navbar container - optimized for logo */
+        .navbar-container {
+            padding: 10px 0;
+        }
+
         /* Logo image styling */
         .navbar-logo {
-            max-height: 40px;
+            max-height: 45px;
             width: auto;
             object-fit: contain;
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -171,11 +176,11 @@
 
 <!-- NAVBAR HEADER -->
 <nav>
-    <div class="w-full px-6 py-2.5">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="w-full px-6 navbar-container">
+        <div class="max-w-7xl mx-auto flex items-center justify-between h-full">
             <!-- Logo -->
-            <div class="flex items-center gap-3">
-                <img src="./assets/logo%20qodha%20(Landscape).png" alt="Qodha Mitra Logo" class="navbar-logo" onerror="this.style.display='none'">
+            <div class="flex items-center">
+                <img src="./assets/img/logo%20qodha%20(Lanscape).png" alt="Qodha Mitra Logo" class="navbar-logo">
             </div>
 
             <!-- Menu Navigation (Desktop) -->
@@ -204,7 +209,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden md:hidden mt-3 pb-3 border-t border-gray-100 pt-3 space-y-2">
+        <div id="mobileMenu" class="hidden md:hidden mt-2 pb-3 border-t border-gray-100 pt-3 space-y-2">
             <a href="index.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">Beranda</a>
             <a href="kategori.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'kategori.php' ? 'active' : ''; ?>">Kategori</a>
             <a href="distributor.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'distributor.php' ? 'active' : ''; ?>">Distributor</a>
