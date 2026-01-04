@@ -4,34 +4,46 @@
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    html, body {
+    html {
         height: 100%;
         width: 100%;
     }
     
     body {
+        height: 100%;
+        width: 100%;
         display: flex;
         flex-direction: column;
-        min-height: 100vh;
-        overflow: hidden;
+        background: white;
     }
 
-    /* Make navbar fixed and content below it */
-    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+    /* Fixed navbar at top */
+    nav { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        z-index: 100;
+        height: 64px;
+    }
     
+    /* Main map area - takes remaining space after navbar */
     #mapContainer {
+        margin-top: 64px;
         flex: 1;
         display: flex;
         overflow: hidden;
         height: calc(100vh - 64px);
         width: 100%;
-        margin-top: 64px;
+        position: relative;
+        background: white;
     }
 
+    /* Map itself fills container */
     #map { 
         height: 100% !important; 
         width: 100% !important; 
-        z-index: 0;
+        z-index: 1;
         flex: 1;
         background-color: #f0f0f0;
     }
@@ -75,6 +87,13 @@
     }
     
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Footer should be below map and scrollable */
+    footer {
+        width: 100%;
+        margin-top: 0;
+        flex-shrink: 0;
+    }
 
     .card-hover {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -145,9 +164,23 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
+
+    /* Wrapper untuk layout yang proper */
+    main {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 64px);
+    }
+
+    /* Map section */
+    #mapContainer {
+        flex: 1;
+        overflow: hidden;
+    }
 </style>
 
-<div id="mapContainer" class="distributor-page">
+<div id="pageWrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
+    <div id="mapContainer" class="distributor-page">
     <!-- SIDEBAR -->
     <aside class="w-full md:w-[380px] bg-white border-r border-gray-200 z-[1000] flex flex-col h-full absolute md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out" id="sidebar">
         
@@ -252,6 +285,7 @@
         
         <div id="map"></div>
     </main>
+</div>
 </div>
 
 <script>

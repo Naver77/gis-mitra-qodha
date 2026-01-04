@@ -1,6 +1,6 @@
 
 <!-- FOOTER -->
-<footer class="w-full bg-gray-900 text-gray-300 mt-16">
+<footer class="w-full bg-gray-900 text-gray-300 mt-auto">
     <div class="max-w-7xl mx-auto px-6 py-12">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <!-- Company Info -->
