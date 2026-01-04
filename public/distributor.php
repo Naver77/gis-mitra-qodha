@@ -2,16 +2,38 @@
 <?php include 'header.php'; ?>
 
 <style>
-    body.distributor-page {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+        height: 100%;
+        width: 100%;
+    }
+    
+    body {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        overflow: hidden;
     }
+
+    /* Make navbar fixed and content below it */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
     
     #mapContainer {
         flex: 1;
         display: flex;
         overflow: hidden;
+        height: calc(100vh - 64px);
+        width: 100%;
+        margin-top: 64px;
+    }
+
+    #map { 
+        height: 100% !important; 
+        width: 100% !important; 
+        z-index: 0;
+        flex: 1;
+        background-color: #f0f0f0;
     }
 
     .marker-icon-custom {
@@ -25,8 +47,6 @@
         transform: scale(1.18) !important;
         filter: drop-shadow(0 10px 18px rgba(16, 185, 129, 0.35));
     }
-
-    #map { height: 100%; width: 100%; z-index: 0; }
 
     .leaflet-popup-content-wrapper {
         background: white;
