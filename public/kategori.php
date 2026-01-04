@@ -94,17 +94,21 @@
             
             foreach($categories as $cat):
             ?>
-            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition transform hover:-translate-y-1">
-                <div class="bg-gradient-to-br <?php echo $colorMap[$cat['color']]; ?> p-8 text-white">
-                    <i class="fa-solid <?php echo $cat['icon']; ?> text-4xl mb-4 block"></i>
-                    <h3 class="text-2xl font-bold"><?php echo $cat['name']; ?></h3>
+            <div class="product-card">
+                <div class="product-card-header bg-gradient-to-br <?php echo $colorMap[$cat['color']]; ?> p-8 text-white relative">
+                    <div class="product-card-overlay"></div>
+                    <i class="fa-solid <?php echo $cat['icon']; ?> product-card-icon text-4xl mb-4 block relative z-10"></i>
+                    <h3 class="text-2xl font-bold relative z-10"><?php echo $cat['name']; ?></h3>
                 </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4"><?php echo $cat['description']; ?></p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-500 font-medium"><?php echo $cat['count']; ?></span>
-                        <a href="#" class="text-emerald-600 font-semibold hover:text-emerald-700">
-                            Lihat Produk <i class="fa-solid fa-arrow-right ml-2"></i>
+                <div class="product-card-content p-6">
+                    <p class="text-gray-600 mb-4 flex-1"><?php echo $cat['description']; ?></p>
+                    <div class="product-card-footer">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm text-gray-500 font-medium"><?php echo $cat['count']; ?></span>
+                        </div>
+                        <a href="distributor.php" class="product-card-cta">
+                            <span>Lihat Distributor</span>
+                            <i class="fa-solid fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
