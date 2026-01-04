@@ -236,13 +236,29 @@ function renderMitra(data) {
     }
 
     // Custom Marker Icon with fallback
+    const markerPath = '../../../assets/img/marker_qodha.png';
+    console.log('📍 Marker icon path:', markerPath);
+    
+    // Test marker image availability
+    fetch(markerPath)
+        .then(res => {
+            if (res.ok) {
+                console.log('✅ Marker image found:', res.status);
+            } else {
+                console.error('❌ Marker image not found:', res.status, res.statusText);
+            }
+        })
+        .catch(err => console.error('❌ Marker fetch error:', err));
+    
     const qodhaIcon = L.icon({
-        iconUrl: '../../assets/img/marker_qodha.png',
+        iconUrl: markerPath,
         iconSize: [48, 48],
         iconAnchor: [24, 48],
         popupAnchor: [0, -48],
         className: 'marker-icon-custom'
     });
+    
+    console.log('🎯 Marker icon created:', qodhaIcon);
 
     let renderedCount = 0;
     // Render each marker and item
