@@ -236,9 +236,9 @@ function renderMitra(data) {
     }
 
     // Custom Marker Icon with fallback
-    const markerPath = '../img/marker_qodha.png';
+    const markerPath = '/gis_mitraqodha/public/assets/img/marker_qodha.png';
     console.log('📍 Marker icon path:', markerPath);
-    console.log('📍 Full URL would be:', new URL(markerPath, window.location.href).href);
+    console.log('📍 Full URL would be:', markerPath);
     
     // Test marker image availability
     fetch(markerPath)
