@@ -32,14 +32,11 @@ const boundsGroup = L.featureGroup();
 // --- LOAD DATA ---
 async function loadData() {
     try {
-        // Build correct API URL based on current location
-        const currentPath = window.location.pathname;
-        const apiUrl = currentPath.includes('/public/') 
-            ? './api/map_data.php' 
-            : './public/api/map_data.php';
+        // Build correct API URL - always use ../api from /public/distributor.php
+        const apiUrl = '../api/map_data.php';
         
         console.log('🔍 Loading from:', apiUrl);
-        console.log('📍 Current path:', currentPath);
+        console.log('📍 Current path:', window.location.pathname);
         
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
