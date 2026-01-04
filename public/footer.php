@@ -3,11 +3,19 @@
 <footer class="w-full bg-slate-950 text-gray-300 mt-auto border-t border-slate-800">
     <div class="max-w-7xl mx-auto px-6 py-8">
         <!-- Social Icons Top Center -->
-        <div class="flex justify-center gap-4 mb-8 pb-6 border-b border-slate-800">
-            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300"><i class="fab fa-x-twitter"></i></a>
-            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300"><i class="fab fa-youtube"></i></a>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+            <div class="flex justify-center gap-4">
+                <a href="https://wa.me/6281717302223" target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://www.instagram.com/qodha.id/" target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.facebook.com/qodhaaromatic" target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.youtube.com/channel/UC3MouHTaJ5rD90jzYENTzqQ" target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-emerald-600 flex items-center justify-center text-gray-300 hover:text-white transition-all duration-300" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+            <div class="flex gap-3 items-center">
+                <!-- compact ecommerce badges -->
+                <a href="https://www.tokopedia.com/qodha" target="_blank" rel="noopener" class="text-xs px-3 py-1 bg-slate-800 rounded-md hover:bg-emerald-600 hover:text-white transition">Tokopedia</a>
+                <a href="https://shopee.co.id/qodha.id" target="_blank" rel="noopener" class="text-xs px-3 py-1 bg-slate-800 rounded-md hover:bg-emerald-600 hover:text-white transition">Shopee</a>
+                <a href="https://www.lazada.co.id/shop/qodha-id" target="_blank" rel="noopener" class="text-xs px-3 py-1 bg-slate-800 rounded-md hover:bg-emerald-600 hover:text-white transition">Lazada</a>
+            </div>
         </div>
 
         <!-- 4 Column Grid -->
@@ -22,7 +30,7 @@
                     </li>
                     <li class="flex gap-2 items-start">
                         <i class="fa-solid fa-phone text-emerald-500 mt-1 flex-shrink-0"></i>
-                        <span><a href="tel:+62212345678" class="hover:text-emerald-400 transition">+62 (21) 234-5678</a></span>
+                        <span><a href="tel:+6281717302223" class="hover:text-emerald-400 transition">+62 817-1730-2223</a></span>
                     </li>
                     <li class="flex gap-2 items-start">
                         <i class="fa-solid fa-envelope text-emerald-500 mt-1 flex-shrink-0"></i>
