@@ -33,14 +33,33 @@ const boundsGroup = L.featureGroup();
 async function loadData() {
     try {
         const response = await fetch('../api/map_data.php');
-        if (!response.ok) throw new Error('Failed to fetch');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        allMitraData = data.features;
+        
+        console.log('Map Data Loaded:', data);
+        
+        // Handle error response
+        if (data.debug && data.debug.error) {
+            console.error('API Error:', data.debug.error);
+            showErrorState('Gagal memuat data. Periksa database: ' + data.debug.error);
+            return;
+        }
+        
+        // Filter hanya status aktif (client-side)
+        allMitraData = data.features ? data.features.filter(f => f.properties.status_aktif === '1') : [];
+        
+        console.log('Filtered Active Mitra:', allMitraData.length);
+        
+        if (allMitraData.length === 0) {
+            showErrorState('Tidak ada distributor aktif ditemukan. Periksa database.');
+            return;
+        }
+        
         calculateStats();
         renderMitra(allMitraData);
     } catch (err) {
-        console.error('Data load error:', err);
-        showErrorState('Gagal memuat data. Periksa koneksi Anda.');
+        console.error('Load data error:', err);
+        showErrorState('Gagal memuat data: ' + err.message);
     }
 }
 

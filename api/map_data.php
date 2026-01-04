@@ -3,42 +3,54 @@
 header('Content-Type: application/json');
 require_once '../config/database.php';
 
-// 1. Ambil data mitra yang statusnya AKTIF ('1')
-$sql = "SELECT * FROM tb_mitra WHERE status_aktif = '1'";
+$features = [];
+$error = null;
+
+// Ambil data mitra (semua, filter status_aktif di client jika diperlukan)
+$sql = "SELECT * FROM tb_mitra WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
 $result = mysqli_query($conn, $sql);
 
-$features = [];
-
-while ($row = mysqli_fetch_assoc($result)) {
-    // 2. Susun format GeoJSON untuk setiap titik
-    $features[] = [
-        "type" => "Feature",
-        "properties" => [
-            "id" => $row['id_mitra'],
-            "nama" => $row['nama_mitra'],
-            "alamat" => $row['alamat'],
-            "kota" => $row['kota'],
-            "hp" => $row['no_hp'],
-            "foto" => $row['foto']
-        ],
-        "geometry" => [
-            "type" => "Point",
-            // PENTING: GeoJSON urutannya [Longitude, Latitude] (X, Y)
-            // Jangan terbalik, nanti peta muncul di Antartika!
-            "coordinates" => [
-                (float)$row['longitude'], 
-                (float)$row['latitude']
-            ]
-        ]
-    ];
+if (!$result) {
+    $error = "Query Error: " . mysqli_error($conn);
+} else {
+    if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $lat = (float)$row['latitude'];
+            $lng = (float)$row['longitude'];
+            
+            // Validasi koordinat
+            if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
+                $features[] = [
+                    "type" => "Feature",
+                    "properties" => [
+                        "id" => isset($row['id_mitra']) ? $row['id_mitra'] : '',
+                        "nama" => isset($row['nama_mitra']) ? $row['nama_mitra'] : 'Unknown',
+                        "alamat" => isset($row['alamat']) ? $row['alamat'] : '',
+                        "kota" => isset($row['kota']) ? $row['kota'] : '',
+                        "hp" => isset($row['no_hp']) ? $row['no_hp'] : '',
+                        "foto" => isset($row['foto']) ? $row['foto'] : '',
+                        "status_aktif" => isset($row['status_aktif']) ? $row['status_aktif'] : '0'
+                    ],
+                    "geometry" => [
+                        "type" => "Point",
+                        "coordinates" => [$lng, $lat]
+                    ]
+                ];
+            }
+        }
+    }
 }
 
-// 3. Bungkus dalam FeatureCollection
 $geojson = [
     "type" => "FeatureCollection",
-    "features" => $features
+    "features" => $features,
+    "count" => count($features),
+    "debug" => [
+        "db" => $GLOBALS['db'] ?? 'unknown',
+        "error" => $error,
+        "status" => $error ? "error" : "success"
+    ]
 ];
 
-// 4. Output JSON
-echo json_encode($geojson, JSON_PRETTY_PRINT);
+echo json_encode($geojson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 ?>
