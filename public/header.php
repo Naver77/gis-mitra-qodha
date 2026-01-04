@@ -171,6 +171,64 @@
         .mobile-btn:active {
             transform: scale(0.95);
         }
+        
+        /* WhatsApp CTA styles (sticky) */
+        .whatsapp-cta {
+            position: fixed;
+            right: 1rem;
+            bottom: 1.25rem;
+            z-index: 60;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.625rem;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+            color: #fff;
+            padding: 0.5rem 0.9rem;
+            border-radius: 9999px;
+            box-shadow: 0 8px 24px rgba(16,185,129,0.12);
+            transform: translateY(0);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease;
+            will-change: transform;
+        }
+
+        .whatsapp-cta .fa-whatsapp {
+            font-size: 1.125rem;
+        }
+
+        .whatsapp-cta .label {
+            font-weight: 600;
+        }
+
+        /* small red badge/dot */
+        .whatsapp-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 9999px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            display: inline-block;
+        }
+
+        /* subtle pulse to draw attention (low intensity) */
+        .whatsapp-pulse { animation: waPulse 2.2s infinite; }
+        @keyframes waPulse {
+            0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.12); }
+            70% { box-shadow: 0 0 0 10px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+
+        /* entrance animation */
+        .wa-enter { animation: waEnter 0.36s cubic-bezier(.2,.9,.3,1) both; }
+        @keyframes waEnter { from { transform: translateY(10px) scale(.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+        /* responsive adjustments: icon-only on very small devices */
+        @media (max-width: 640px) {
+            .whatsapp-cta { padding: 0.55rem; gap: 0.4rem; right: 0.75rem; bottom: 0.75rem; }
+            .whatsapp-cta .label { display: none; }
+        }
     </style>
 </head>
 <body class="bg-white">
