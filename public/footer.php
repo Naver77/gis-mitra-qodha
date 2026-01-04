@@ -105,6 +105,12 @@
     </div>
 </footer>
 
+<!-- Sticky WhatsApp CTA -->
+<a href="https://wa.me/6281717302223?text=Halo%20Qodha%20Mitra%20%F0%9F%91%8B%20Saya%20ingin%20tahu%20lebih%20lanjut" target="_blank" rel="noopener" aria-label="Chat via WhatsApp" class="whatsapp-cta fixed right-4 bottom-6 z-50 flex items-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-3 rounded-full shadow-lg transition-transform duration-200 transform hover:-translate-y-1">
+    <i class="fab fa-whatsapp text-lg"></i>
+    <span class="hidden sm:inline font-medium">Chat WhatsApp</span>
+</a>
+
     <!-- Leaflet and map script (only if on distributor page) -->
     <?php if (basename($_SERVER['PHP_SELF']) == 'distributor.php'): ?>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
