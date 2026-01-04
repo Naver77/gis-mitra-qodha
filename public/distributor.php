@@ -15,6 +15,7 @@
         display: flex;
         flex-direction: column;
         background: white;
+        padding-top: 64px;
     }
 
     /* Fixed navbar at top */
@@ -27,9 +28,8 @@
         height: 64px;
     }
     
-    /* Main map area - takes remaining space after navbar */
+    /* Main map area - flush to navbar */
     #mapContainer {
-        margin-top: 64px;
         flex: 1;
         display: flex;
         overflow: hidden;
@@ -39,7 +39,7 @@
         background: white;
     }
 
-    /* Map itself fills container */
+    /* Map itself fills container completely */
     #map { 
         height: 100% !important; 
         width: 100% !important; 
@@ -176,6 +176,69 @@
     #mapContainer {
         flex: 1;
         overflow: hidden;
+    }
+
+    /* Sidebar styling */
+    #sidebar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Detail panel styling */
+    #detailPanel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Toggle button styling */
+    button[onclick*="toggleSidebar"] {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    button[onclick*="toggleSidebar"]:hover {
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Input field styling */
+    #searchBox {
+        transition: all 0.3s ease;
+        background: rgba(249, 250, 251, 0.8);
+        backdrop-filter: blur(10px);
+    }
+
+    #searchBox:focus {
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Card hover effect */
+    .card-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
+    }
+
+    /* Stat card styling */
+    .stat-card {
+        background: rgba(249, 250, 251, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 </style>
 

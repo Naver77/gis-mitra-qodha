@@ -27,12 +27,27 @@
             --color-gray-900: #111827;
         }
         * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        
+        /* Glassmorphism navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 30px rgba(16, 185, 129, 0.1), 
+                        0 8px 16px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body class="bg-white">
 
 <!-- NAVBAR HEADER -->
-<nav class="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+<nav>
     <div class="w-full px-6 py-3">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <!-- Logo -->
