@@ -43,12 +43,127 @@
             left: 0;
             right: 0;
             z-index: 50;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 30px rgba(16, 185, 129, 0.1), 
-                        0 8px 16px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px) saturate(100%);
+            -webkit-backdrop-filter: blur(16px) saturate(100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 4px 30px rgba(16, 185, 129, 0.08), 
+                        0 8px 16px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Logo image styling */
+        .navbar-logo {
+            max-height: 40px;
+            width: auto;
+            object-fit: contain;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .navbar-logo:hover {
+            transform: scale(1.05) translateY(-1px);
+        }
+
+        /* Modern menu link styles */
+        .menu-link {
+            position: relative;
+            transition: color 0.3s ease;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .menu-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2.5px;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            border-radius: 4px;
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .menu-link:hover::after {
+            width: 100%;
+        }
+
+        .menu-link:hover {
+            color: var(--color-primary);
+        }
+
+        .menu-link.active {
+            color: var(--color-primary);
+        }
+
+        .menu-link.active::after {
+            width: 100%;
+        }
+
+        /* Mobile menu animation */
+        #mobileMenu {
+            animation: slideDownFade 0.3s ease-out forwards;
+        }
+
+        #mobileMenu.hidden {
+            animation: slideUpFade 0.3s ease-in forwards;
+        }
+
+        @keyframes slideDownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUpFade {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Mobile menu link with active state */
+        .mobile-menu-link {
+            position: relative;
+            display: block;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            padding-left: 12px;
+            margin-left: -12px;
+        }
+
+        .mobile-menu-link:hover {
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+            padding-left: 16px;
+        }
+
+        .mobile-menu-link.active {
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        /* Mobile menu button effect */
+        .mobile-btn {
+            transition: all 0.3s ease;
+        }
+
+        .mobile-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -56,51 +171,45 @@
 
 <!-- NAVBAR HEADER -->
 <nav>
-    <div class="w-full px-6 py-3">
+    <div class="w-full px-6 py-2.5">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <!-- Logo -->
-            <div class="flex items-center gap-2">
-                <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                    Q
-                </div>
-                <div>
-                    <h1 class="text-base font-bold text-gray-900">Qodha Mitra</h1>
-                    <p class="text-xs text-gray-500">Distributor</p>
-                </div>
+            <div class="flex items-center gap-3">
+                <img src="./assets/logo%20qodha%20(Landscape).png" alt="Qodha Mitra Logo" class="navbar-logo" onerror="this.style.display='none'">
             </div>
 
             <!-- Menu Navigation (Desktop) -->
             <div class="hidden md:flex items-center gap-8">
-                <a href="index.php" class="text-sm font-medium text-gray-700 hover:text-emerald-600 transition <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'text-emerald-600 border-b-2 border-emerald-600' : ''; ?>">
+                <a href="index.php" class="menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">
                     Beranda
                 </a>
-                <a href="kategori.php" class="text-sm font-medium text-gray-700 hover:text-emerald-600 transition <?php echo basename($_SERVER['PHP_SELF']) == 'kategori.php' ? 'text-emerald-600 border-b-2 border-emerald-600' : ''; ?>">
+                <a href="kategori.php" class="menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'kategori.php' ? 'active' : ''; ?>">
                     Kategori
                 </a>
-                <a href="distributor.php" class="text-sm font-medium text-gray-700 hover:text-emerald-600 transition <?php echo basename($_SERVER['PHP_SELF']) == 'distributor.php' ? 'text-emerald-600 border-b-2 border-emerald-600' : ''; ?>">
+                <a href="distributor.php" class="menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'distributor.php' ? 'active' : ''; ?>">
                     Distributor
                 </a>
-                <a href="contact.php" class="text-sm font-medium text-gray-700 hover:text-emerald-600 transition <?php echo basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'text-emerald-600 border-b-2 border-emerald-600' : ''; ?>">
+                <a href="contact.php" class="menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : ''; ?>">
                     Hubungi Kami
                 </a>
-                <a href="faq.php" class="text-sm font-medium text-gray-700 hover:text-emerald-600 transition <?php echo basename($_SERVER['PHP_SELF']) == 'faq.php' ? 'text-emerald-600 border-b-2 border-emerald-600' : ''; ?>">
+                <a href="faq.php" class="menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'faq.php' ? 'active' : ''; ?>">
                     FAQ
                 </a>
             </div>
 
             <!-- Mobile Menu Button -->
-            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-700 hover:text-emerald-600">
+            <button onclick="toggleMobileMenu()" class="mobile-btn md:hidden text-gray-700 hover:text-emerald-600">
                 <i class="fa-solid fa-bars text-xl"></i>
             </button>
         </div>
 
         <!-- Mobile Menu -->
         <div id="mobileMenu" class="hidden md:hidden mt-3 pb-3 border-t border-gray-100 pt-3 space-y-2">
-            <a href="index.php" class="block text-sm font-medium text-gray-700 hover:text-emerald-600 py-1.5">Beranda</a>
-            <a href="kategori.php" class="block text-sm font-medium text-gray-700 hover:text-emerald-600 py-1.5">Kategori</a>
-            <a href="distributor.php" class="block text-sm font-medium text-gray-700 hover:text-emerald-600 py-1.5">Distributor</a>
-            <a href="contact.php" class="block text-sm font-medium text-gray-700 hover:text-emerald-600 py-1.5">Hubungi Kami</a>
-            <a href="faq.php" class="block text-sm font-medium text-gray-700 hover:text-emerald-600 py-1.5">FAQ</a>
+            <a href="index.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">Beranda</a>
+            <a href="kategori.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'kategori.php' ? 'active' : ''; ?>">Kategori</a>
+            <a href="distributor.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'distributor.php' ? 'active' : ''; ?>">Distributor</a>
+            <a href="contact.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'contact.php' ? 'active' : ''; ?>">Hubungi Kami</a>
+            <a href="faq.php" class="mobile-menu-link <?php echo basename($_SERVER['PHP_SELF']) == 'faq.php' ? 'active' : ''; ?>">FAQ</a>
         </div>
     </div>
 </nav>
