@@ -32,33 +32,57 @@ const boundsGroup = L.featureGroup();
 // --- LOAD DATA ---
 async function loadData() {
     try {
-        const response = await fetch('../api/map_data.php');
+        // Build correct API URL based on current location
+        const currentPath = window.location.pathname;
+        const apiUrl = currentPath.includes('/public/') 
+            ? './api/map_data.php' 
+            : './public/api/map_data.php';
+        
+        console.log('🔍 Loading from:', apiUrl);
+        console.log('📍 Current path:', currentPath);
+        
+        const response = await fetch(apiUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         
-        console.log('Map Data Loaded:', data);
+        console.log('✅ Map Data Loaded:', data);
+        console.log('📊 Total features:', data.count);
         
-        // Handle error response
+        // Handle error response from API
         if (data.debug && data.debug.error) {
-            console.error('API Error:', data.debug.error);
-            showErrorState('Gagal memuat data. Periksa database: ' + data.debug.error);
+            console.error('🚨 API Error:', data.debug.error);
+            showErrorState('Gagal memuat data. Error: ' + data.debug.error);
             return;
         }
+        
+        // Validate data structure
+        if (!data.features || !Array.isArray(data.features)) {
+            throw new Error('Invalid data structure: features array missing');
+        }
+        
+        console.log('🔍 Total features in response:', data.features.length);
         
         // Filter hanya status aktif (client-side)
-        allMitraData = data.features ? data.features.filter(f => f.properties.status_aktif === '1') : [];
+        allMitraData = data.features.filter(f => {
+            if (!f.properties || !f.geometry) return false;
+            const coords = f.geometry.coordinates;
+            return coords && coords.length === 2 && f.properties.status_aktif === '1';
+        });
         
-        console.log('Filtered Active Mitra:', allMitraData.length);
+        console.log('✅ Filtered Active Mitra:', allMitraData.length);
         
         if (allMitraData.length === 0) {
-            showErrorState('Tidak ada distributor aktif ditemukan. Periksa database.');
+            console.warn('⚠️ No active distributors found. All records:', data.features.length);
+            showErrorState('Tidak ada distributor aktif ditemukan. Total: ' + data.features.length);
             return;
         }
         
+        console.log('🎯 Ready to render', allMitraData.length, 'markers');
         calculateStats();
         renderMitra(allMitraData);
+        
     } catch (err) {
-        console.error('Load data error:', err);
+        console.error('❌ Load data error:', err);
         showErrorState('Gagal memuat data: ' + err.message);
     }
 }
@@ -189,6 +213,8 @@ function selectLocation(marker, sidebarItem, lat, lng) {
 
 // --- RENDER MITRA GRID ---
 function renderMitra(data) {
+    console.log('🎨 Rendering', data.length, 'markers...');
+    
     // Clean previous layers and clear any selected marker state
     if (currentActiveMarker) {
         if (currentActiveMarker._icon) currentActiveMarker._icon.classList.remove('marker-selected');
@@ -197,10 +223,12 @@ function renderMitra(data) {
     currentActiveMarker = null;
     currentActiveItem = null;
     markersLayer.clearLayers();
+    boundsGroup.clearLayers();
     const listContainer = document.getElementById('mitraList');
     listContainer.innerHTML = '';
 
     if(data.length === 0) {
+        console.warn('⚠️ No data to render');
         listContainer.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 text-gray-400">
                 <i class="fa-solid fa-map text-4xl mb-3 opacity-40"></i>
@@ -210,63 +238,93 @@ function renderMitra(data) {
         return;
     }
 
-    // Custom Marker Icon
+    // Custom Marker Icon with fallback
     const qodhaIcon = L.icon({
-        iconUrl: './assets/img/marker_qodha.png',
-        iconSize: [48, 48],
-        iconAnchor: [24, 48],
-        popupAnchor: [0, -50],
+        iconUrl: './assets/img/marker_qodha.svg',
+        iconSize: [48, 56],
+        iconAnchor: [24, 56],
+        popupAnchor: [0, -56],
         className: 'marker-icon-custom'
     });
 
+    let renderedCount = 0;
     // Render each marker and item
-    data.forEach(feature => {
-        const props = feature.properties;
-        const [lng, lat] = feature.geometry.coordinates;
-        const isActive = props.status_aktif === '1';
+    data.forEach((feature, idx) => {
+        try {
+            const props = feature.properties;
+            const [lng, lat] = feature.geometry.coordinates;
+            const isActive = props.status_aktif === '1';
 
-        // Popup Content
-        const popupContent = `
-            <div class="w-full">
-                <div class="h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 relative">
-                    <div class="absolute -bottom-5 left-4 bg-white p-1 rounded-xl shadow-md border border-var(--color-gray-100)">
-                        <img src="../assets/img/marker_qodha.png" class="w-12 h-12 object-contain"> 
+            // Validate coordinates
+            if (typeof lat !== 'number' || typeof lng !== 'number' || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                console.warn(`⚠️ Invalid coordinates for ${props.nama}: [${lat}, ${lng}]`);
+                return;
+            }
+
+            // Create sidebar item first
+            const sidebarItem = createSidebarItem(props, lat, lng);
+
+            // Popup Content
+            const popupContent = `
+                <div class="w-full">
+                    <div class="h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 relative">
+                        <div class="absolute -bottom-5 left-4 bg-white p-1 rounded-xl shadow-md border border-gray-100">
+                            <div class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                                ${props.nama.charAt(0)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-10 px-5 pb-5">
+                        <h3 class="font-bold text-gray-800 text-base leading-snug">${props.nama}</h3>
+                        <p class="text-sm text-gray-500 mt-2 leading-relaxed">${props.alamat}</p>
+                        <p class="text-xs text-gray-400 mt-1">📍 ${props.kota}</p>
+                        ${props.hp ? `
+                            <a href="https://wa.me/${props.hp}" target="_blank" 
+                               class="mt-4 flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-emerald-300 shadow-lg">
+                                <i class="fa-brands fa-whatsapp"></i> Chat WhatsApp
+                            </a>
+                        ` : ''}
                     </div>
                 </div>
-                <div class="pt-10 px-5 pb-5">
-                    <h3 class="font-bold text-gray-800 text-base leading-snug">${props.nama}</h3>
-                    <p class="text-sm text-gray-500 mt-2 leading-relaxed">${props.alamat}</p>
-                    <p class="text-xs text-gray-400 mt-1">📍 ${props.kota}</p>
-                    ${props.hp ? `
-                        <a href="https://wa.me/${props.hp}" target="_blank" 
-                           class="mt-4 flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-emerald-300 shadow-lg">
-                            <i class="fa-brands fa-whatsapp"></i> Chat WhatsApp
-                        </a>
-                    ` : ''}
-                </div>
-            </div>
-        `;
+            `;
 
-        // Add Marker
-        const marker = L.marker([lat, lng], { icon: qodhaIcon, title: props.nama })
-            .bindPopup(popupContent, { maxWidth: 330 });
-        
-        markersLayer.addLayer(marker);
-                boundsGroup.addLayer(marker);
-        // Marker click event
-        marker.on('click', () => {
-            selectLocation(marker, sidebarItem, lat, lng);
-        });
+            // Add Marker
+            const marker = L.marker([lat, lng], { icon: qodhaIcon, title: props.nama })
+                .bindPopup(popupContent, { maxWidth: 330 });
+            
+            markersLayer.addLayer(marker);
+            boundsGroup.addLayer(marker);
 
-        listContainer.appendChild(sidebarItem);
+            // Marker click event
+            marker.on('click', () => {
+                selectLocation(marker, sidebarItem, lat, lng);
+            });
+
+            listContainer.appendChild(sidebarItem);
+            renderedCount++;
+            
+        } catch (markerErr) {
+            console.error(`❌ Error rendering marker ${idx}:`, markerErr);
+        }
     });
 
-            // Fit map bounds to all markers
-            if (boundsGroup.getLayers().length > 0) {
-                setTimeout(() => {
-                    map.fitBounds(boundsGroup.getBounds(), { padding: [100, 100], maxZoom: 14 });
-                }, 100);
+    console.log(`✅ Rendered ${renderedCount}/${data.length} markers successfully`);
+
+    // Fit map bounds to all markers
+    if (boundsGroup.getLayers().length > 0) {
+        setTimeout(() => {
+            try {
+                map.fitBounds(boundsGroup.getBounds(), { padding: [100, 100], maxZoom: 14 });
+                console.log('🗺️ Map fitted to bounds with', boundsGroup.getLayers().length, 'markers');
+            } catch (boundsErr) {
+                console.error('⚠️ Error fitting bounds:', boundsErr);
             }
+        }, 100);
+    } else {
+        console.warn('⚠️ No markers to fit bounds');
+    }
+}
+
 // --- FILTER FUNCTIONS ---
 function filterByStatus(status) {
     currentFilter = status;

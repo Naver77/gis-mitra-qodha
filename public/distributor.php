@@ -234,4 +234,10 @@
     </main>
 </div>
 
+<script>
+    // Log for debugging
+    console.log('📄 Page loaded: distributor.php');
+    console.log('🌍 API Base URL will auto-detect');
+</script>
+
 <?php include 'footer.php'; ?>
