@@ -30,6 +30,7 @@
         
         /* Global body padding untuk navbar fixed */
         body {
+            margin: 0;
             padding-top: 73px;
             display: flex;
             flex-direction: column;
