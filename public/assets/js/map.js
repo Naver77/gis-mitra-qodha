@@ -237,10 +237,10 @@ function renderMitra(data) {
 
     // Custom Marker Icon with fallback
     const qodhaIcon = L.icon({
-        iconUrl: './assets/img/marker_qodha.svg',
-        iconSize: [48, 56],
-        iconAnchor: [24, 56],
-        popupAnchor: [0, -56],
+        iconUrl: './assets/img/marker_qodha.png',
+        iconSize: [48, 48],
+        iconAnchor: [24, 48],
+        popupAnchor: [0, -48],
         className: 'marker-icon-custom'
     });
 
