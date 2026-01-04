@@ -236,8 +236,9 @@ function renderMitra(data) {
     }
 
     // Custom Marker Icon with fallback
-    const markerPath = '../../../assets/img/marker_qodha.png';
+    const markerPath = '../img/marker_qodha.png';
     console.log('📍 Marker icon path:', markerPath);
+    console.log('📍 Full URL would be:', new URL(markerPath, window.location.href).href);
     
     // Test marker image availability
     fetch(markerPath)
@@ -301,9 +302,12 @@ function renderMitra(data) {
                 </div>
             `;
 
-            // Add Marker
+            // Add Marker with icon, use fallback to default if custom fails
             const marker = L.marker([lat, lng], { icon: qodhaIcon, title: props.nama })
                 .bindPopup(popupContent, { maxWidth: 330 });
+            
+            // Log marker creation
+            console.log(`📍 Created marker ${idx + 1}: ${props.nama} at [${lat}, ${lng}]`);
             
             markersLayer.addLayer(marker);
             boundsGroup.addLayer(marker);
