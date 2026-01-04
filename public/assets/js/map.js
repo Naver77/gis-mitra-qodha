@@ -26,6 +26,9 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 const markersLayer = L.layerGroup().addTo(map);
 const zoomControl = L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+// Bounds group for fit view
+const boundsGroup = L.featureGroup();
+
 // --- LOAD DATA ---
 async function loadData() {
     try {
@@ -190,7 +193,7 @@ function renderMitra(data) {
 
     // Custom Marker Icon
     const qodhaIcon = L.icon({
-        iconUrl: 'http://localhost/gis_mitraqodha/assets/img/marker_qodha.png',
+        iconUrl: './assets/img/marker_qodha.png',
         iconSize: [48, 48],
         iconAnchor: [24, 48],
         popupAnchor: [0, -50],
@@ -230,10 +233,7 @@ function renderMitra(data) {
             .bindPopup(popupContent, { maxWidth: 330 });
         
         markersLayer.addLayer(marker);
-
-        // Create Sidebar Item
-        const sidebarItem = createSidebarItem(props, lat, lng, marker);
-        
+                boundsGroup.addLayer(marker);
         // Marker click event
         marker.on('click', () => {
             selectLocation(marker, sidebarItem, lat, lng);
@@ -241,8 +241,13 @@ function renderMitra(data) {
 
         listContainer.appendChild(sidebarItem);
     });
-}
 
+            // Fit map bounds to all markers
+            if (boundsGroup.getLayers().length > 0) {
+                setTimeout(() => {
+                    map.fitBounds(boundsGroup.getBounds(), { padding: [100, 100], maxZoom: 14 });
+                }, 100);
+            }
 // --- FILTER FUNCTIONS ---
 function filterByStatus(status) {
     currentFilter = status;
