@@ -119,7 +119,7 @@ function calculateStats() {
     const citiesHTML = topCities.map(([city, count]) => `
         <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
             <span class="font-medium text-sm text-gray-700">${city}</span>
-            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">${count}</span>
+            <span class="text-xs font-bold text-yellow-500 bg-yellow-50 px-2.5 py-1 rounded-full">${count}</span>
         </div>
     `).join('');
     
@@ -135,11 +135,11 @@ function createSidebarItem(props, lat, lng, marker) {
     
     item.innerHTML = `
         <div class="flex items-start gap-3">
-            <div class="w-12 h-12 rounded-lg ${isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0 font-bold text-lg group-hover:scale-110 transition-transform">
+            <div class="w-12 h-12 rounded-lg ${isActive ? 'bg-yellow-100 text-yellow-500' : 'bg-red-100 text-red-600'} flex items-center justify-center shrink-0 font-bold text-lg group-hover:scale-110 transition-transform">
                 ${props.nama.charAt(0)}
             </div>
             <div class="flex-1 min-w-0">
-                <h4 class="font-semibold text-gray-800 text-sm leading-tight group-hover:text-emerald-700 transition-colors truncate">${props.nama}</h4>
+                <h4 class="font-semibold text-gray-800 text-sm leading-tight group-hover:text-yellow-700 transition-colors truncate">${props.nama}</h4>
                 <p class="text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">${props.alamat}</p>
                 <div class="mt-3 flex items-center gap-2 flex-wrap">
                     <span class="text-[11px] bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-semibold border border-var(--color-gray-200) truncate">
@@ -178,7 +178,7 @@ function selectLocation(marker, sidebarItem, lat, lng) {
 
     // Reset previous sidebar item
     if (currentActiveItem) {
-        currentActiveItem.classList.remove('ring-2', 'ring-emerald-400', 'bg-emerald-50');
+        currentActiveItem.classList.remove('ring-2', 'ring-yellow-400', 'bg-yellow-50');
     }
 
     // Set new state
@@ -188,7 +188,7 @@ function selectLocation(marker, sidebarItem, lat, lng) {
     // Highlight sidebar item
     if(sidebarItem) {
         sidebarItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        sidebarItem.classList.add('ring-2', 'ring-emerald-400', 'bg-emerald-50');
+        sidebarItem.classList.add('ring-2', 'ring-yellow-400', 'bg-yellow-50');
     }
 
     // Smooth map animation
@@ -281,9 +281,9 @@ function renderMitra(data) {
             // Popup Content
             const popupContent = `
                 <div class="w-full">
-                    <div class="h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 relative">
+                    <div class="h-20 bg-gradient-to-br from-yellow-500 to-yellow-600 relative">
                         <div class="absolute -bottom-5 left-4 bg-white p-1 rounded-xl shadow-md border border-gray-100">
-                            <div class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                            <div class="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold">
                                 ${props.nama.charAt(0)}
                             </div>
                         </div>
@@ -294,7 +294,7 @@ function renderMitra(data) {
                         <p class="text-xs text-gray-400 mt-1">📍 ${props.kota}</p>
                         ${props.hp ? `
                             <a href="https://wa.me/${props.hp}" target="_blank" 
-                               class="mt-4 flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-emerald-300 shadow-lg">
+                               class="mt-4 flex items-center justify-center gap-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-yellow-300 shadow-lg">
                                 <i class="fa-brands fa-whatsapp"></i> Chat WhatsApp
                             </a>
                         ` : ''}
@@ -396,10 +396,10 @@ function getLocation() {
             // Add user location marker
             L.circleMarker([latitude, longitude], {
                 radius: 8,
-                fillColor: '#3b82f6',
+                fillColor: '#f79c54',
                 color: '#fff',
                 weight: 3,
-                fillOpacity: 0.8
+                fillOpacity: 0.85
             }).addTo(map).bindPopup('<div class="text-sm font-semibold">📍 Lokasi Anda</div>');
             
             map.flyTo([latitude, longitude], 15, { duration: 1.5 });

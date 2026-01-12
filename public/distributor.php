@@ -1,359 +1,286 @@
-<?php $page_title = "Cari Distributor"; ?>
+<?php $page_title = "Peta Distributor"; ?>
 <?php include 'header.php'; ?>
 
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Reset layout agar peta fullscreen di area konten */
+    html, body { height: 100%; overflow: hidden; }
     
-    html {
-        height: 100%;
-        width: 100%;
-    }
-    
-    body {
-        height: 100%;
-        width: 100%;
+    /* Layout Utama */
+    .map-layout {
         display: flex;
-        flex-direction: column;
-        background: white;
-    }
-
-    /* Fixed navbar at top */
-    nav { 
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        right: 0; 
-        z-index: 100;
-        height: 64px;
-    }
-    
-    /* Main map area - flush to navbar */
-    #mapContainer {
-        flex: 1;
-        display: flex;
-        overflow: hidden;
-        height: calc(100vh - 64px);
+        height: calc(100vh - 85px); /* Kurangi tinggi navbar */
         width: 100%;
         position: relative;
-        background: white;
     }
 
-    /* Map itself fills container completely */
-    #map { 
-        height: 100% !important; 
-        width: 100% !important; 
-        z-index: 1;
+    /* Sidebar Kiri */
+    .map-sidebar {
+        width: 400px;
+        background: white;
+        z-index: 20;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    /* Peta Kanan */
+    .map-wrapper {
         flex: 1;
-        background-color: #f0f0f0;
+        position: relative;
+        z-index: 10;
+    }
+    #map { height: 100%; width: 100%; background: #f0f0f0; }
+
+    /* Custom Scrollbar Sidebar */
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f9fafb; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+    /* Responsiveness Mobile */
+    @media (max-width: 768px) {
+        .map-sidebar {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 100%; /* Sidebar full width di HP */
+            transform: translateX(-100%); /* Sembunyi default */
+        }
+        .map-sidebar.open { transform: translateX(0); }
     }
 
-    .marker-icon-custom {
-        transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), 
-                    filter 0.28s ease, box-shadow 0.28s ease !important;
-        will-change: transform;
-        transform-origin: center bottom;
-    }
-
-    .marker-selected {
-        transform: scale(1.18) !important;
-        filter: drop-shadow(0 10px 18px rgba(16, 185, 129, 0.35));
-    }
-
-    .leaflet-popup-content-wrapper {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12), 0 4px 6px rgba(0, 0, 0, 0.06);
-        padding: 0;
-        overflow: hidden;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    .leaflet-popup-content { margin: 0; width: 320px !important; padding: 0; }
-    .leaflet-popup-tip { background: white; box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.08); }
-    
-    .leaflet-container a.leaflet-popup-close-button {
-        top: 12px; right: 12px; color: #9ca3af; font-size: 20px; width: 24px; height: 24px; line-height: 24px; text-align: center;
-    }
-    .leaflet-container a.leaflet-popup-close-button:hover { color: #ef4444; }
-
+    /* Loading Spinner */
     .loader {
-        border: 3px solid rgba(16, 185, 129, 0.1);
-        border-top: 3px solid #10b981;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        animation: spin 0.8s linear infinite;
+        border: 3px solid #f3f3f3; border-top: 3px solid #f59e0b;
+        border-radius: 50%; width: 30px; height: 30px;
+        animation: spin 1s linear infinite;
     }
-    
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* Footer should be below map and scrollable */
-    footer {
-        width: 100%;
-        margin-top: 0;
-        flex-shrink: 0;
-    }
-
-    .card-hover {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .badge-active {
-        background: #d1fae5;
-        color: #047857;
-        border: 1px solid #a7f3d0;
-    }
-    
-    .badge-closed {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-    }
-
-    .tab-btn {
-        position: relative;
-        font-weight: 600;
-        font-size: 14px;
-        padding: 10px 16px;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        color: #6b7280;
-        transition: color 0.3s ease;
-    }
-
-    .tab-btn.active {
-        color: #10b981;
-    }
-
-    .tab-btn.active::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: #10b981;
-        border-radius: 3px 3px 0 0;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 16px;
-        border: 1px solid #e5e7eb;
-        text-align: center;
-    }
-
-    .stat-value {
-        font-size: 20px;
-        font-weight: 800;
-        color: #111827;
-    }
-
-    .stat-label {
-        font-size: 11px;
-        color: #6b7280;
-        margin-top: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Wrapper untuk layout yang proper */
-    main {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 64px);
-    }
-
-    /* Map section */
-    #mapContainer {
-        flex: 1;
-        overflow: hidden;
-    }
-
-    /* Sidebar styling */
-    #sidebar {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
-    }
-
-    /* Detail panel styling */
-    #detailPanel {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
-    }
-
-    /* Toggle button styling */
-    button[onclick*="toggleSidebar"] {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease;
-    }
-
-    button[onclick*="toggleSidebar"]:hover {
-        background: rgba(255, 255, 255, 1);
-        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2);
-    }
-
-    /* Input field styling */
-    #searchBox {
-        transition: all 0.3s ease;
-        background: rgba(249, 250, 251, 0.8);
-        backdrop-filter: blur(10px);
-    }
-
-    #searchBox:focus {
-        background: rgba(255, 255, 255, 1);
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-
-    /* Card hover effect */
-    .card-hover {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
-    }
-
-    /* Stat card styling */
-    .stat-card {
-        background: rgba(249, 250, 251, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(226, 232, 240, 0.5);
-        transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-        background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
 </style>
 
-<div id="pageWrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
-    <div id="mapContainer" class="distributor-page">
-    <!-- SIDEBAR -->
-    <aside class="w-full md:w-[380px] bg-white border-r border-gray-200 z-[1000] flex flex-col h-full absolute md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out" id="sidebar">
-        
-        <!-- SEARCH & ACTIONS -->
-        <div class="p-4 bg-white border-b border-gray-200 space-y-3 z-10">
-            <div class="relative group">
-                <input type="text" id="searchBox" placeholder="Cari nama atau lokasi..." 
-                    class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-2.5 text-gray-400 text-sm group-focus-within:text-emerald-500"></i>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="getLocation()" class="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-100 active:scale-95 transition-all border border-emerald-100">
-                    <i class="fa-solid fa-location-crosshairs text-sm"></i>
-                    <span>Disekitar</span>
-                </button>
-                <button onclick="toggleDetailPanel()" class="flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-100 active:scale-95 transition-all border border-blue-100">
-                    <i class="fa-solid fa-chart-simple text-sm"></i>
-                    <span>Statistik</span>
-                </button>
-            </div>
-
-            <div class="flex border-b border-gray-200 overflow-x-auto -mx-4 px-4">
-                <button onclick="filterByStatus('all')" class="tab-btn active" data-filter="all">Semua</button>
-                <button onclick="filterByStatus('active')" class="tab-btn" data-filter="active">
-                    <i class="fa-solid fa-circle text-[6px] mr-1.5" style="vertical-align: middle;"></i>Buka
-                </button>
-                <button onclick="filterByStatus('closed')" class="tab-btn" data-filter="closed">
-                    <i class="fa-solid fa-circle text-[6px] mr-1.5" style="vertical-align: middle;"></i>Tutup
-                </button>
+<div class="map-layout">
+    
+    <aside id="sidebar" class="map-sidebar">
+        <div class="p-5 border-b border-gray-100 bg-white z-10 shadow-sm">
+            <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-brand-gold"></i> Lokasi Mitra
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">Temukan agen resmi Qodha terdekat.</p>
+            
+            <div class="mt-4 space-y-3">
+                <div class="relative">
+                    <input type="text" id="searchBox" placeholder="Cari Toko / Kota..." 
+                        class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-gold transition shadow-sm">
+                    <i class="fa-solid fa-search absolute left-3.5 top-3 text-gray-400"></i>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="filterStatus('all')" class="filter-btn active flex-1 py-1.5 text-xs font-bold rounded-lg border border-gray-200 bg-brand-dark text-white transition hover:opacity-90">Semua</button>
+                    <button onclick="filterStatus('1')" class="filter-btn flex-1 py-1.5 text-xs font-bold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">Buka</button>
+                    <button onclick="getLocation()" class="px-3 py-1.5 bg-brand-gold text-white rounded-lg hover:bg-amber-600 transition" title="Cari Sekitar Saya">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- STATS -->
-        <div class="px-4 py-2 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 grid grid-cols-3 gap-1.5">
-            <div class="stat-card">
-                <div class="stat-value text-emerald-600" id="totalMitra">0</div>
-                <div class="stat-label">Total</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value text-green-600" id="activeMitra">0</div>
-                <div class="stat-label">Buka</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value text-red-600" id="closedMitra">0</div>
-                <div class="stat-label">Tutup</div>
-            </div>
-        </div>
-
-        <!-- LIST CONTAINER (Reduced height for 2+ cards visible) -->
-        <div class="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50" id="mitraList">
+        <div id="mitraList" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3 bg-gray-50/50">
             <div class="flex flex-col items-center justify-center h-40 text-gray-400">
-                <div class="loader mb-4"></div>
-                <p class="text-sm font-medium">Memuat data...</p>
+                <div class="loader mb-3"></div>
+                <p class="text-xs">Memuat data peta...</p>
             </div>
+        </div>
+
+        <div class="p-3 border-t border-gray-100 text-center bg-white text-[10px] text-gray-400">
+            &copy; 2026 Qodha WebGIS System
         </div>
     </aside>
 
-    <!-- DETAIL PANEL -->
-    <div id="detailPanel" class="hidden fixed bottom-0 md:bottom-auto left-0 right-0 md:left-auto md:right-0 md:top-16 md:w-80 h-96 md:h-[calc(100vh-64px)] bg-white border-t md:border-t-0 md:border-l border-gray-200 z-50 md:z-10 flex flex-col shadow-2xl md:shadow-lg">
-        <div class="px-6 py-3 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-            <h2 class="text-lg font-bold text-gray-800">Statistik</h2>
-            <button onclick="toggleDetailPanel()" class="text-gray-400 hover:text-gray-600 md:hidden">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div class="space-y-4">
-                <h3 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Ringkasan</h3>
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 text-center border border-emerald-200">
-                        <div class="text-2xl font-bold text-emerald-700" id="statTotal">0</div>
-                        <div class="text-xs text-emerald-600 font-medium mt-1">Total</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center border border-green-200">
-                        <div class="text-2xl font-bold text-green-700" id="statActive">0</div>
-                        <div class="text-xs text-green-600 font-medium mt-1">Buka</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 text-center border border-red-200">
-                        <div class="text-2xl font-bold text-red-700" id="statClosed">0</div>
-                        <div class="text-xs text-red-600 font-medium mt-1">Tutup</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <h3 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Top 5 Kota</h3>
-                <div id="citiesList" class="space-y-2">
-                    <div class="h-20 flex items-center justify-center text-gray-400">
-                        <p class="text-sm">Memuat...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAP -->
-    <main class="flex-1 relative h-full overflow-hidden">
-        <button onclick="toggleSidebar()" class="absolute top-4 left-4 z-[999] bg-white p-2.5 rounded-lg shadow-lg md:hidden text-emerald-600 hover:bg-gray-50 active:scale-95 transition border border-gray-200">
+    <main class="map-wrapper">
+        <button onclick="toggleSidebar()" class="absolute top-4 left-4 z-[400] bg-white p-3 rounded-xl shadow-lg md:hidden text-brand-dark hover:text-brand-gold transition">
             <i class="fa-solid fa-bars text-lg"></i>
         </button>
-        
+
         <div id="map"></div>
     </main>
-</div>
+
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Log for debugging
-    console.log('📄 Page loaded: distributor.php');
-    console.log('🌍 API Base URL will auto-detect');
+    // --- 1. CONFIGURATION ---
+    let map, markersLayer;
+    let allData = []; // Simpan data mentah disini
+    let currentFilter = 'all';
+
+    // Inisialisasi Peta
+    function initMap() {
+        map = L.map('map', { zoomControl: false }).setView([-6.200000, 106.816666], 6); // View Indonesia
+        
+        // Pindahkan Zoom Control ke kanan bawah
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // Tile Layer (CartoDB Voyager - Bersih & Modern)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 19
+        }).addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
+    }
+
+    // --- 2. FETCH DATA DARI API ---
+    function loadData() {
+        // Panggil API PHP yang sudah kita buat
+        fetch('../api/map_data.php')
+            .then(res => res.json())
+            .then(data => {
+                allData = data.features;
+                renderData(allData); // Tampilkan awal
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('mitraList').innerHTML = `
+                    <div class="text-center p-8 text-red-500">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                        <p class="text-sm">Gagal memuat data server.</p>
+                    </div>`;
+            });
+    }
+
+    // --- 3. RENDER DATA (List & Marker) ---
+    function renderData(data) {
+        markersLayer.clearLayers();
+        const listContainer = document.getElementById('mitraList');
+        listContainer.innerHTML = '';
+
+        if(data.length === 0) {
+            listContainer.innerHTML = `<div class="text-center p-8 text-gray-400 text-sm">Tidak ada lokasi ditemukan.</div>`;
+            return;
+        }
+
+        // Custom Icon
+        const qodhaIcon = L.icon({
+            iconUrl: 'assets/img/marker_qodha.png', // Pastikan path benar
+            iconSize: [42, 42],
+            iconAnchor: [21, 42],
+            popupAnchor: [0, -45]
+        });
+
+        data.forEach(feature => {
+            const props = feature.properties;
+            const [lng, lat] = feature.geometry.coordinates;
+
+            // A. Buat Marker
+            const marker = L.marker([lat, lng], { icon: qodhaIcon })
+                .bindPopup(`
+                    <div class="text-center font-sans min-w-[180px]">
+                        <div class="bg-amber-100 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2 text-amber-600">
+                            <i class="fa-solid fa-shop"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800">${props.nama}</h3>
+                        <p class="text-xs text-gray-500 my-1">${props.kota}</p>
+                        <a href="https://wa.me/${props.hp}" target="_blank" class="block mt-2 bg-green-500 text-white py-1 px-3 rounded text-xs font-bold hover:bg-green-600">
+                            Chat WhatsApp
+                        </a>
+                    </div>
+                `);
+            
+            markersLayer.addLayer(marker);
+
+            // B. Buat List Item di Sidebar
+            const item = document.createElement('div');
+            item.className = "bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-gold cursor-pointer transition group";
+            item.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="bg-gray-100 text-gray-500 p-2 rounded-lg shrink-0 group-hover:bg-brand-gold group-hover:text-white transition">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm group-hover:text-brand-gold transition">${props.nama}</h4>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">${props.alamat}</p>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200 font-medium">
+                                ${props.kota}
+                            </span>
+                            ${props.status_aktif == '1' 
+                                ? '<span class="text-[10px] text-green-600 flex items-center gap-1"><i class="fa-solid fa-circle text-[6px]"></i> Buka</span>' 
+                                : '<span class="text-[10px] text-red-500">Tutup</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Event Klik Item List
+            item.addEventListener('click', () => {
+                map.flyTo([lat, lng], 16, { duration: 1.5 });
+                marker.openPopup();
+                if(window.innerWidth < 768) toggleSidebar(); // Tutup sidebar di HP
+            });
+
+            listContainer.appendChild(item);
+        });
+    }
+
+    // --- 4. FITUR PENCARIAN & FILTER ---
+    document.getElementById('searchBox').addEventListener('input', (e) => {
+        const keyword = e.target.value.toLowerCase();
+        applyFilters(keyword, currentFilter);
+    });
+
+    function filterStatus(status) {
+        currentFilter = status;
+        // Update UI Button active state
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('bg-brand-dark', 'text-white');
+            btn.classList.add('text-gray-600');
+        });
+        // Highlight tombol yang diklik (tambahkan logic class manual atau pakai event.target)
+        applyFilters(document.getElementById('searchBox').value.toLowerCase(), status);
+    }
+
+    function applyFilters(keyword, status) {
+        const filtered = allData.filter(item => {
+            const matchName = item.properties.nama.toLowerCase().includes(keyword) || 
+                              item.properties.kota.toLowerCase().includes(keyword);
+            const matchStatus = status === 'all' || item.properties.status_aktif === status;
+            return matchName && matchStatus;
+        });
+        renderData(filtered);
+    }
+
+    // --- 5. UTILITIES ---
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar').classList.toggle('-translate-x-full'); // Khusus logic tailwind class mobile
+        // Koreksi manual classList untuk mobile logic yg lebih simpel
+        const sb = document.getElementById('sidebar');
+        if(window.innerWidth < 768) {
+            if(sb.style.transform === 'translateX(0%)') {
+                sb.style.transform = 'translateX(-100%)';
+            } else {
+                sb.style.transform = 'translateX(0%)';
+            }
+        }
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                L.circleMarker([latitude, longitude], {
+                    radius: 8, color: '#fff', fillColor: '#3b82f6', fillOpacity: 1, weight: 2
+                }).addTo(map).bindPopup("Lokasi Anda").openPopup();
+                map.flyTo([latitude, longitude], 13);
+            }, () => alert("Gagal mendeteksi lokasi."));
+        }
+    }
+
+    // Start System
+    initMap();
+    loadData();
+
 </script>
 
-<?php include 'footer.php'; ?>
+<?php // Footer tidak dipanggil di sini agar layout map full height ?>
+</body>
+</html>
