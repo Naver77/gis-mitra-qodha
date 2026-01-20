@@ -1,65 +1,84 @@
 <?php
 // File: config/database.php
 
-// --- PERBAIKAN 1: Definisikan ENVIRONMENT jika belum ada ---
-// Agar tidak error "Undefined constant" saat file ini diakses langsung
-if (!defined('ENVIRONMENT')) {
-    define('ENVIRONMENT', 'development');
+// Mencegah akses langsung jika diperlukan (Opsional, sesuaikan dengan framework jika pakai)
+if (!defined('ENVIRONMENT')) { define('ENVIRONMENT', 'development'); }
+
+// --- 1. DETEKSI ENVIRONMENT (LOKAL vs HOSTING) ---
+$host_server = $_SERVER['HTTP_HOST'];
+
+// Cek apakah akses dari Laptop (Localhost)
+$is_local = ($host_server == 'localhost' || $host_server == '127.0.0.1');
+
+if ($is_local) {
+    // ==========================================
+    // A. SETTINGAN KHUSUS LAPTOP (LARAGON)
+    // ==========================================
+    
+    // Database Credential
+    $db_host = 'localhost';
+    $db_user = 'root';
+    $db_pass = '';          // Default Laragon kosong
+    $db_name = 'db_qodha_gis'; 
+    $db_port = 3308;        // Port Laragon Anda (Sesuai kode lama)
+
+    // Base URL (Sesuaikan folder project di laptop)
+    // Pastikan akhiran ada slash '/'
+    $base_url = "http://localhost/gis_mitraqodha/"; 
+
+} else {
+    // ==========================================
+    // B. SETTINGAN KHUSUS HOSTING (LIVE)
+    // ==========================================
+    
+    // Database Credential Hosting
+    // TODO: GANTI INI DENGAN DATA DARI PANEL HOSTING
+    $db_host = 'localhost';             // Di hosting biasanya tetap localhost
+    $db_user = 'u354392114_naver77';  // Ganti dengan User DB Hosting
+    $db_pass = '*/mut7Gf';   // Ganti dengan Pass DB Hosting
+    $db_name = 'u354392114_gismitraqodha';    // Ganti dengan Nama DB Hosting
+    $db_port = 3306;                    // Port Standar Hosting (Jangan 3308)
+
+    // Base URL Hosting
+    // Script ini otomatis mendeteksi domain (https://domainanda.com/)
+    $base_url = "https://" . $host_server . "/"; 
+    
+    // OPSI: Jika project anda di hosting ada di dalam subfolder 'public', hapus // di bawah:
+    // $base_url = "https://" . $host_server . "/public/";
 }
 
-// 1. KONFIGURASI DATABASE
-$db['default'] = array(
-    'dsn'   => '',
-    'hostname' => 'localhost', // Gunakan localhost untuk Laragon
-    'username' => 'root',
-    'password' => '',          // Default Laragon kosong
-    'database' => 'db_qodha_gis',
-    'dbdriver' => 'mysqli',
-    'dbprefix' => '',
-    'pconnect' => FALSE,       // FALSE = Wajib untuk mencegah "MySQL Has Gone Away"
-    'db_debug' => (ENVIRONMENT !== 'production'),
-    'cache_on' => FALSE,
-    'cachedir' => '',
-    'char_set' => 'utf8mb4',
-    'dbcollat' => 'utf8mb4_general_ci',
-    'swap_pre' => '',
-    'encrypt'  => FALSE,
-    'compress' => FALSE,
-    'stricton' => FALSE,
-    'failover' => array(),
-    'save_queries' => TRUE
-);
+// --- 2. EKSEKUSI KONEKSI ---
+// Menggunakan @ untuk handle error manual
+$conn = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, $db_port);
 
-// --- PERBAIKAN 2: Mapping Variabel untuk Koneksi Manual ---
-// Kode kamu sebelumnya error karena $host, $user, dll belum ada isinya.
-// Kita ambil isinya dari array $db['default'] di atas.
-
-$host = $db['default']['hostname'];
-$user = $db['default']['username'];
-$pass = $db['default']['password'];
-$db_name = $db['default']['database'];
-$port = 3308; // Default port Laragon
-
-// 2. MELAKUKAN KONEKSI
-// Menggunakan @ untuk menangkap error dengan rapi di blok diagnosa bawah
-$conn = @mysqli_connect($host, $user, $pass, $db_name, $port);
-
-// 3. CEK KONEKSI (DIAGNOSTIK LENGKAP)
+// --- 3. DIAGNOSA ERROR (JIKA GAGAL) ---
 if (!$conn) {
-    // Tampilkan pesan error yang jelas untuk debugging
-    echo "<div style='background: #ffcccc; padding: 20px; border: 1px solid red; font-family: sans-serif;'>";
-    echo "<h3>❌ KONEKSI DATABASE GAGAL!</h3>";
-    echo "<strong>Pesan Error Sistem:</strong> " . mysqli_connect_error() . "<br><br>";
-    echo "<strong>Analisis Masalah:</strong><br>";
-    echo "1. Pastikan Laragon sudah diklik <b>'Start All'</b>.<br>";
-    echo "2. Pastikan database <b>'$db_name'</b> sudah dibuat di phpMyAdmin.<br>";
-    echo "3. Jika errornya 'Target machine actively refused', restart Laragon.<br>";
+    // Tampilan Error yang Informatif
+    echo "<div style='background: #fee2e2; color: #991b1b; padding: 20px; border: 1px solid #f87171; font-family: sans-serif; border-radius: 8px; margin: 20px;'>";
+    echo "<h3 style='margin-top:0'>❌ KONEKSI DATABASE GAGAL</h3>";
+    echo "<p><strong>Pesan Sistem:</strong> " . mysqli_connect_error() . "</p>";
+    
+    if($is_local) {
+        echo "<hr><p><strong>Tips Laptop (Local):</strong><br>";
+        echo "- Cek apakah Laragon 'Start All' sudah diklik.<br>";
+        echo "- Cek apakah nama database <code>$db_name</code> sudah dibuat.<br>";
+        echo "- Cek port MySQL di Laragon (apakah benar 3308?).</p>";
+    } else {
+        echo "<hr><p><strong>Tips Hosting (Live):</strong><br>";
+        echo "- Anda belum mengisi Username/Password DB yang benar di file <code>config/database.php</code>.<br>";
+        echo "- Pastikan user database sudah diberikan akses ke database (Add User to Database) di cPanel.</p>";
+    }
     echo "</div>";
-    die(); // Matikan halaman
+    die(); // Stop script
 }
 
-// 4. SETTING TIMEZONE & BASE URL
+// --- 4. SET GLOBAL CONFIG ---
 date_default_timezone_set('Asia/Jakarta');
-$base_url = "http://localhost/gis_mitraqodha/"; 
 
+// (Opsional) Jika kode lama Anda butuh variabel array $db, kita buatkan dummy-nya
+// agar kode lain tidak error, tapi koneksi utama tetap pakai $conn di atas.
+$db['default']['hostname'] = $db_host;
+$db['default']['username'] = $db_user;
+$db['default']['password'] = $db_pass;
+$db['default']['database'] = $db_name;
 ?>
