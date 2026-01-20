@@ -8,7 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <meta name="description" content="Qodha Aromatic - Pusat Distributor Wewangian Sunnah Terlengkap & Termurah. Temukan lokasi agen terdekat.">
+<meta property="og:title" content="Qodha Aromatic | WebGIS Mitra">
+<meta property="og:description" content="Platform resmi pencarian lokasi agen, reseller, dan katalog produk Qodha Aromatic.">
+<meta property="og:image" content="assets/img/qodhacirclemascot.png"> <meta property="og:url" content="https://qodha.id">
+<meta property="og:type" content="website">
     <script>
         tailwind.config = {
             theme: {

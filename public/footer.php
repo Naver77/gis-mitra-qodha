@@ -210,6 +210,19 @@
             icon.classList.remove('fa-xmark'); icon.classList.add('fa-bars');
         }
     }
+
+    function catatKlik(tipe, id) {
+    // Kirim data ke API tanpa mengganggu user (Background Process)
+    const formData = new FormData();
+    formData.append('type', tipe);
+    formData.append('id', id);
+    
+    fetch('../api/log_click.php', {
+        method: 'POST',
+        body: formData
+    }).catch(err => console.log('Log error:', err));
+    // Tidak perlu menunggu respon, biarkan user lanjut ke WA
+}
 </script>
 
 </body>

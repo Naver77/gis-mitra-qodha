@@ -29,7 +29,10 @@ function renderProductCard($prod, $base_url) {
             '.$badge.'
             
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center z-30">
-                <a href="https://wa.me/6281717302223?text=Halo, saya pesan: '.$prod['nama_produk'].'" target="_blank" class="bg-brand-green text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-300 flex items-center gap-2">
+                <a href="https://wa.me/6281717302223?text=Halo, saya pesan: '.$prod['nama_produk'].'" 
+   onclick="catatKlik(\'klik_produk\', '.$prod['id_produk'].')" 
+   target="_blank" 
+   class="bg-brand-green text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-300 flex items-center gap-2">
                     <i class="fa-brands fa-whatsapp"></i> Pesan
                 </a>
             </div>
