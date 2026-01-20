@@ -2,7 +2,9 @@
 // File: config/database.php
 
 // Mencegah akses langsung jika diperlukan (Opsional, sesuaikan dengan framework jika pakai)
-if (!defined('ENVIRONMENT')) { define('ENVIRONMENT', 'development'); }
+if (!defined('ENVIRONMENT')) {
+    define('ENVIRONMENT', 'development');
+}
 
 // --- 1. DETEKSI ENVIRONMENT (LOKAL vs HOSTING) ---
 $host_server = $_SERVER['HTTP_HOST'];
@@ -14,23 +16,22 @@ if ($is_local) {
     // ==========================================
     // A. SETTINGAN KHUSUS LAPTOP (LARAGON)
     // ==========================================
-    
+
     // Database Credential
     $db_host = 'localhost';
     $db_user = 'root';
     $db_pass = '';          // Default Laragon kosong
-    $db_name = 'db_qodha_gis'; 
+    $db_name = 'db_qodha_gis';
     $db_port = 3308;        // Port Laragon Anda (Sesuai kode lama)
 
     // Base URL (Sesuaikan folder project di laptop)
     // Pastikan akhiran ada slash '/'
-    $base_url = "http://localhost/gis_mitraqodha/"; 
-
+    $base_url = "http://localhost/gis_mitraqodha/";
 } else {
     // ==========================================
     // B. SETTINGAN KHUSUS HOSTING (LIVE)
     // ==========================================
-    
+
     // Database Credential Hosting
     // TODO: GANTI INI DENGAN DATA DARI PANEL HOSTING
     $db_host = 'localhost';             // Di hosting biasanya tetap localhost
@@ -41,8 +42,8 @@ if ($is_local) {
 
     // Base URL Hosting
     // Script ini otomatis mendeteksi domain (https://domainanda.com/)
-    $base_url = "https://" . $host_server . "/"; 
-    
+    $base_url = "https://" . $host_server . "/";
+
     // OPSI: Jika project anda di hosting ada di dalam subfolder 'public', hapus // di bawah:
     // $base_url = "https://" . $host_server . "/public/";
 }
@@ -57,8 +58,8 @@ if (!$conn) {
     echo "<div style='background: #fee2e2; color: #991b1b; padding: 20px; border: 1px solid #f87171; font-family: sans-serif; border-radius: 8px; margin: 20px;'>";
     echo "<h3 style='margin-top:0'>❌ KONEKSI DATABASE GAGAL</h3>";
     echo "<p><strong>Pesan Sistem:</strong> " . mysqli_connect_error() . "</p>";
-    
-    if($is_local) {
+
+    if ($is_local) {
         echo "<hr><p><strong>Tips Laptop (Local):</strong><br>";
         echo "- Cek apakah Laragon 'Start All' sudah diklik.<br>";
         echo "- Cek apakah nama database <code>$db_name</code> sudah dibuat.<br>";
@@ -81,4 +82,3 @@ $db['default']['hostname'] = $db_host;
 $db['default']['username'] = $db_user;
 $db['default']['password'] = $db_pass;
 $db['default']['database'] = $db_name;
-?>
