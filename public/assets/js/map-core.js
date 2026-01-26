@@ -1,6 +1,7 @@
 /**
  * Qodha WebGIS Core Logic
  * Standard: Enterprise Scale - Modular
+ * Optimized by: AI Assistant
  */
 
 // --- GLOBAL VARIABLES ---
@@ -9,12 +10,29 @@ let allData = [];       // Data mentah dari DB
 let processedData = []; // Data setelah hitung jarak
 let currentFilter = 'all';
 let userLat = null, userLng = null;
+let activeMarkerId = null; // Melacak marker yang aktif
+
+// --- 0. UTILITY: DEBOUNCE (Performance Booster) ---
+// Mencegah fungsi dipanggil terlalu sering saat mengetik
+function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
 
 // --- 1. INITIALIZATION ---
 function initMap() {
-    map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5); 
+    // Set view awal (Indonesia Centric)
+    map = L.map('map', { 
+        zoomControl: false,
+        tap: false // Fix bug di beberapa mobile browser
+    }).setView([-2.5, 118], 5); 
+    
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+    // Tile Layer: CartoDB Voyager (Tampilan Bersih & Modern)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CartoDB & OSM',
         maxZoom: 19
@@ -22,19 +40,26 @@ function initMap() {
 
     markersLayer = L.layerGroup().addTo(map);
     
-    // Fix rendering issue
+    // Fix rendering issue saat load pertama
     setTimeout(() => { map.invalidateSize(); }, 500);
 }
 
 // --- 2. DATA FETCHING ---
 function loadData() {
+    // Menampilkan Skeleton Loading (Opsional UI improvement)
+    document.getElementById('mitraList').innerHTML = `<div class="p-4 animate-pulse space-y-3"><div class="h-20 bg-gray-200 rounded-xl"></div><div class="h-20 bg-gray-200 rounded-xl"></div></div>`;
+
     fetch('../api/map_data.php')
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("HTTP Status " + res.status);
+            return res.json();
+        })
         .then(data => {
-            allData = data.features;
-            // Saat pertama load, processedData sama dengan data mentah
+            allData = data.features || []; // Safety check jika data kosong
+            
+            // Inisialisasi data
             processedData = allData.map(item => {
-                item.distance = null; // Belum ada jarak
+                item.distance = null; 
                 return item;
             });
             
@@ -43,7 +68,11 @@ function loadData() {
         })
         .catch(err => {
             console.error("API Error:", err);
-            document.getElementById('mitraList').innerHTML = `<div class="p-8 text-center text-red-500 text-xs">Gagal koneksi server.</div>`;
+            document.getElementById('mitraList').innerHTML = 
+                `<div class="p-8 text-center text-red-500 text-xs">
+                    <i class="fa-solid fa-wifi-slash text-2xl mb-2"></i><br>
+                    Gagal memuat data mitra. Periksa koneksi internet.
+                </div>`;
         });
 }
 
@@ -54,15 +83,21 @@ function renderData(data) {
     listContainer.innerHTML = '';
 
     if(data.length === 0) {
-        listContainer.innerHTML = `<div class="text-center p-8 text-gray-400 text-xs">Tidak ada lokasi dalam jangkauan ini.</div>`;
+        listContainer.innerHTML = 
+            `<div class="flex flex-col items-center justify-center h-64 text-center p-8 text-gray-400">
+                <i class="fa-solid fa-map-location-dot text-4xl mb-3 opacity-30"></i>
+                <p class="text-xs">Tidak ada lokasi mitra yang cocok dengan filter ini.</p>
+            </div>`;
         return;
     }
 
     const qodhaIcon = L.icon({
         iconUrl: 'assets/img/marker_qodha.png',
-        iconSize: [46, 46],     // Sedikit diperbesar
+        iconSize: [46, 46],      
         iconAnchor: [23, 46],
-        popupAnchor: [0, -50]
+        popupAnchor: [0, -50],
+        // Fallback jika gambar marker 404 (Sangat penting untuk production)
+        className: 'marker-icon-img' 
     });
 
     data.forEach((feature, index) => {
@@ -70,52 +105,41 @@ function renderData(data) {
         const [lng, lat] = feature.geometry.coordinates;
         
         // --- LOGIC UI DATA ---
-        
-        // 1. Ambil Kota/Kecamatan dari Alamat (Simulasi Pintar)
-        // Mengambil 2 kata terakhir dari alamat jika kolom kota belum ada di DB
         let locationSuffix = props.alamat.split(',').pop().trim(); 
         
-        // 2. Info Jarak (Format Samsung: "Sawangan, 21.09 km")
         let distanceInfo = '';
         if(feature.distance !== null) {
             let km = (feature.distance / 1000).toFixed(2);
             distanceInfo = `<span class="text-xs font-bold text-amber-600 block mt-1">
-                                <i class="fa-solid fa-location-arrow"></i> ${km} km dari lokasi Anda
+                                <i class="fa-solid fa-location-arrow"></i> ${km} km
                             </span>`;
         }
 
-        // 3. Badge Jenis Mitra
         let badgeClass = 'bg-gray-100 text-gray-600';
         if(props.jenis === 'Agen') badgeClass = 'bg-blue-50 text-blue-700 border border-blue-100';
         if(props.jenis === 'Reseller') badgeClass = 'bg-green-50 text-green-700 border border-green-100';
 
-        // --- A. POPUP MAP (LAYOUT SAMSUNG) ---
+        // --- A. POPUP MAP ---
         const popupContent = `
-            <div class="font-sans text-left relative">
-                <div class="h-2 bg-brand-gold w-full"></div>
-                
-                <div class="p-4 pt-3">
-                    <h3 class="font-bold text-gray-900 text-base leading-tight mb-1">${props.nama}</h3>
-                    
-                    <div class="flex flex-wrap items-center gap-2 mb-3">
+            <div class="font-sans text-left relative min-w-[200px]">
+                <div class="h-1.5 bg-brand-gold w-full rounded-t-sm"></div>
+                <div class="p-3">
+                    <h3 class="font-bold text-gray-900 text-sm leading-tight mb-1">${props.nama}</h3>
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
                         <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass} font-bold uppercase tracking-wide">${props.jenis}</span>
-                        ${feature.distance !== null ? `<span class="text-xs font-bold text-gray-500">• ${locationSuffix}</span>` : ''}
                     </div>
-
                     ${distanceInfo}
-
-                    <p class="text-xs text-gray-500 mt-2 leading-relaxed border-t border-gray-100 pt-2">
+                    <p class="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed border-t border-gray-100 pt-2">
                         ${props.alamat}
                     </p>
-
-                    <div class="grid grid-cols-2 gap-2 mt-4">
+                    <div class="grid grid-cols-2 gap-2 mt-3">
                         <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" 
-                           class="flex items-center justify-center gap-1 py-2 rounded-lg border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-50 transition">
+                           class="flex items-center justify-center gap-1 py-1.5 rounded bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-bold hover:bg-gray-100 transition">
                             <i class="fa-solid fa-diamond-turn-right"></i> Rute
                         </a>
-                        <a href="https://wa.me/${props.hp}" onclick="catatKlik('klik_mitra', ${props.id})" target="_blank" 
-                           class="flex items-center justify-center gap-1 py-2 rounded-lg bg-green-500 text-white text-xs font-bold hover:bg-green-600 shadow-md transition">
-                            <i class="fa-brands fa-whatsapp"></i> Hubungi
+                        <a href="https://wa.me/${props.hp}" target="_blank" 
+                           class="flex items-center justify-center gap-1 py-1.5 rounded bg-green-500 text-white text-[10px] font-bold hover:bg-green-600 shadow-sm transition">
+                            <i class="fa-brands fa-whatsapp"></i> Chat
                         </a>
                     </div>
                 </div>
@@ -124,23 +148,23 @@ function renderData(data) {
 
         const marker = L.marker([lat, lng], { icon: qodhaIcon }).bindPopup(popupContent);
         
-        // Event saat Marker diklik -> Highlight Sidebar
         marker.on('click', () => {
             highlightSidebarItem(props.id);
+            activeMarkerId = props.id;
         });
 
         markersLayer.addLayer(marker);
 
         // --- B. LIST SIDEBAR ---
         const item = document.createElement('div');
-        item.id = `mitra-item-${props.id}`; // ID unik untuk scrolling
-        item.className = "mitra-item bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md cursor-pointer transition group relative overflow-hidden";
+        item.id = `mitra-item-${props.id}`; 
+        item.className = "mitra-item bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md cursor-pointer transition-all duration-300 group relative overflow-hidden mb-3";
         
         item.innerHTML = `
-            ${feature.distance !== null ? `<div class="absolute top-0 right-0 bg-gray-100 text-gray-600 px-2 py-1 rounded-bl-lg text-[10px] font-bold">#${index + 1}</div>` : ''}
+            ${feature.distance !== null ? `<div class="absolute top-0 right-0 bg-gray-50 text-gray-400 px-2 py-1 rounded-bl-lg text-[10px] font-bold">#${index + 1}</div>` : ''}
             
             <div class="flex items-start gap-3">
-                <div class="mt-1">
+                <div class="mt-1 w-full">
                     <h4 class="font-bold text-gray-800 text-sm group-hover:text-brand-gold transition">${props.nama}</h4>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-[10px] px-2 py-0.5 rounded border ${badgeClass} font-bold uppercase">${props.jenis}</span>
@@ -154,8 +178,8 @@ function renderData(data) {
         item.addEventListener('click', () => {
             map.flyTo([lat, lng], 16, { duration: 1.5 });
             marker.openPopup();
-            highlightSidebarItem(props.id); // Panggil fungsi highlight
-            if(window.innerWidth < 768) toggleSidebar();
+            highlightSidebarItem(props.id);
+            if(window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
         });
 
         listContainer.appendChild(item);
@@ -164,56 +188,57 @@ function renderData(data) {
 
 // --- FUNGSI BARU: HIGHLIGHT SIDEBAR ---
 function highlightSidebarItem(id) {
-    // 1. Hapus class active dari semua item
+    // Reset Style
     document.querySelectorAll('.mitra-item').forEach(el => {
-        el.classList.remove('active');
-        el.classList.remove('border-brand-gold');
+        el.classList.remove('ring-2', 'ring-brand-gold', 'bg-yellow-50');
+        el.classList.add('bg-white');
     });
 
-    // 2. Tambah class active ke item yang dipilih
+    // Set Active Style
     const activeItem = document.getElementById(`mitra-item-${id}`);
     if(activeItem) {
-        activeItem.classList.add('active');
+        activeItem.classList.remove('bg-white');
+        activeItem.classList.add('ring-2', 'ring-brand-gold', 'bg-yellow-50');
         
-        // 3. Auto Scroll ke item tersebut (Smooth)
+        // Auto Scroll
         activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 
-// --- 4. LOGIC NEAR ME (SAMSUNG STYLE) ---
+// --- 4. LOGIC NEAR ME ---
 function getLocation() {
     if (navigator.geolocation) {
-        // Tampilkan loading di tombol
         const btn = document.querySelector('button[title="Cari Terdekat"]');
+        if(!btn) return; // Safety
+        
         const oriText = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        btn.disabled = true;
 
         navigator.geolocation.getCurrentPosition(pos => {
             userLat = pos.coords.latitude;
             userLng = pos.coords.longitude;
 
-            // 1. Tampilkan Marker User
             if(userMarker) map.removeLayer(userMarker);
             userMarker = L.circleMarker([userLat, userLng], {
                 radius: 8, color: '#fff', fillColor: '#3b82f6', fillOpacity: 1, weight: 3
             }).addTo(map).bindPopup("Lokasi Saya").openPopup();
 
-            // 2. Hitung Jarak ke Semua Mitra
             calculateDistances();
-
-            // 3. Update Tampilan (Sort by Distance)
             applyFilters(); 
-
-            // 4. Zoom ke User
-            map.flyTo([userLat, userLng], 12);
+            map.flyTo([userLat, userLng], 13);
             
-            // Kembalikan tombol
             btn.innerHTML = oriText;
+            btn.disabled = false;
 
-        }, () => {
-            alert("Gagal mendeteksi lokasi. Pastikan GPS aktif.");
+        }, (err) => {
+            console.warn("Geolocation Error: " + err.code);
+            let msg = "Gagal mendeteksi lokasi.";
+            if(err.code === 1) msg = "Izin lokasi ditolak. Harap aktifkan GPS.";
+            alert(msg);
             btn.innerHTML = oriText;
-        });
+            btn.disabled = false;
+        }, { timeout: 10000 }); // Timeout 10 detik
     } else {
         alert("Browser tidak mendukung Geolokasi.");
     }
@@ -221,59 +246,54 @@ function getLocation() {
 
 function calculateDistances() {
     if(userLat === null || userLng === null) return;
-
-    // Tambahkan properti 'distance' ke setiap item data
     processedData = allData.map(item => {
         const [lng, lat] = item.geometry.coordinates;
-        // Hitung jarak (meter) menggunakan Leaflet method
+        // Leaflet distanceTo returns meters
         const dist = map.distance([userLat, userLng], [lat, lng]); 
         item.distance = dist; 
         return item;
     });
-
-    // URUTKAN DARI TERDEKAT (Ascending)
+    // Sort
     processedData.sort((a, b) => a.distance - b.distance);
 }
 
-// --- 5. FILTERING (Search + Kategori + Radius) ---
+// --- 5. FILTERING ---
 function filterStatus(jenis) {
     currentFilter = jenis;
-    // Update Style Tombol
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        if(btn.dataset.jenis === jenis) {
-            btn.className = "filter-btn active flex-1 py-1.5 text-xs font-bold rounded-lg border border-brand-dark bg-brand-dark text-white transition shadow-md whitespace-nowrap px-3";
-        } else {
-            btn.className = "filter-btn flex-1 py-1.5 text-xs font-bold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition whitespace-nowrap px-3";
-        }
+        // Toggle Logic UI Class
+        const isActive = btn.dataset.jenis === jenis;
+        btn.className = isActive 
+            ? "filter-btn active flex-1 py-2 text-xs font-bold rounded-lg bg-gray-900 text-white shadow-lg transform scale-105 transition-all" 
+            : "filter-btn flex-1 py-2 text-xs font-bold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition";
     });
     applyFilters();
 }
 
-function applyRadiusFilter() {
-    applyFilters();
+// Implementasi Debounce pada Search Box
+const searchBox = document.getElementById('searchBox');
+if(searchBox) {
+    searchBox.addEventListener('input', debounce(() => applyFilters(), 300));
 }
 
-document.getElementById('searchBox').addEventListener('input', () => applyFilters());
+// Radius Filter Listener
+const radiusFilter = document.getElementById('radiusFilter');
+if(radiusFilter) {
+    radiusFilter.addEventListener('change', () => applyFilters());
+}
 
 function applyFilters() {
-    const keyword = document.getElementById('searchBox').value.toLowerCase();
-    const radiusVal = document.getElementById('radiusFilter').value; // 'all', '5', '10'
+    const keyword = document.getElementById('searchBox') ? document.getElementById('searchBox').value.toLowerCase() : '';
+    const radiusVal = document.getElementById('radiusFilter') ? document.getElementById('radiusFilter').value : 'all';
 
-    // Gunakan processedData (yang mungkin sudah diurutkan jaraknya)
     const filtered = processedData.filter(item => {
         const props = item.properties;
-        
-        // 1. Filter Text
         const matchText = props.nama.toLowerCase().includes(keyword) || props.alamat.toLowerCase().includes(keyword);
-        
-        // 2. Filter Jenis
         const matchJenis = currentFilter === 'all' || props.jenis === currentFilter;
-
-        // 3. Filter Radius (Hanya jika user sudah share lokasi)
+        
         let matchRadius = true;
         if(radiusVal !== 'all' && item.distance !== null) {
-            const maxMeter = parseInt(radiusVal) * 1000;
-            matchRadius = item.distance <= maxMeter;
+            matchRadius = item.distance <= (parseInt(radiusVal) * 1000);
         }
 
         return matchText && matchJenis && matchRadius;
@@ -285,23 +305,22 @@ function applyFilters() {
 // --- 6. UTILITIES ---
 function toggleSidebar() {
     const sb = document.getElementById('sidebar');
-    sb.classList.toggle('open');
-    if(window.innerWidth < 768) {
-        sb.style.transform = sb.style.transform === 'translateX(0%)' ? 'translateX(-100%)' : 'translateX(0%)';
-    }
-    // Refresh map size saat sidebar berubah
+    if(!sb) return;
+    sb.classList.toggle('translate-x-full'); // Assuming Tailwind class for hiding off-canvas
+    sb.classList.toggle('translate-x-0');
     setTimeout(() => { map.invalidateSize(); }, 300);
 }
 
 function autoZoom(data) {
     if(data.length > 0) {
-        setTimeout(() => {
-            const group = new L.featureGroup(markersLayer.getLayers());
-            map.fitBounds(group.getBounds().pad(0.1));
-        }, 500);
+        // Create bounds from all points
+        const bounds = L.latLngBounds(data.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]));
+        map.fitBounds(bounds, { padding: [50, 50] });
     }
 }
 
 // START
-initMap();
-loadData();
+document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    loadData();
+});
