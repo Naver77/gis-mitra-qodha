@@ -4,6 +4,7 @@
   "description": "GIS Mitraqodha - Aromatic Products Website",
   "scripts": {
     "tailwind:build": "tailwindcss -i ./src/input.css -o ./public/assets/css/tailwind.css",
+    "vercel-build": "npm run tailwind:build",
     "tailwind:watch": "tailwindcss -i ./src/input.css -o ./public/assets/css/tailwind.css --watch"
   },
   "keywords": [
