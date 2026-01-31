@@ -3,21 +3,16 @@
   "version": "1.0.0",
   "description": "GIS Mitraqodha",
   "scripts": {
-    "build": "echo 'No build step for PHP'",
     "tailwind:build": "tailwindcss -i ./src/input.css -o ./public/assets/css/tailwind.css",
     "vercel-build": "npm run tailwind:build"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
-  "keywords": [
-    "tailwind",
-    "qodha"
-  ],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "tailwindcss": "^3.4.19",
+  "dependencies": {
     "vercel-php": "0.7.1"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
   }
 }
