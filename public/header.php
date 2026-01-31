@@ -71,9 +71,9 @@
                                 </a>
                                 <div class="py-2">
                                     <p class="px-4 text-[10px] uppercase font-extrabold text-gray-400 tracking-wider mb-1">Kategori</p>
-                                    <a href="products.php?category=bukhur" class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-gold transition flex items-center gap-2"><i class="fa-solid fa-cloud text-stone-400 w-4 text-center"></i> Bukhur</a>
-                                    <a href="products.php?category=dupa" class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-gold transition flex items-center gap-2"><i class="fa-solid fa-fire text-orange-400 w-4 text-center"></i> Dupa</a>
-                                    <a href="products.php?category=parfum" class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-gold transition flex items-center gap-2"><i class="fa-solid fa-spray-can text-purple-400 w-4 text-center"></i> Parfum</a>
+                                    <a href="products.php?category=bukhur" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-gold transition flex items-center gap-2"><i class="fa-solid fa-cloud text-stone-400 w-4 text-center"></i> Bukhur</a>
+                                    <a href="products.php?category=dupa" class=" px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-gold transition flex items-center gap-2"><i class="fa-solid fa-fire text-orange-400 w-4 text-center"></i> Dupa</a>
+                                    <a href="products.php?category=parfum" class=" px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-gold transition flex items-center gap-2"><i class="fa-solid fa-spray-can text-purple-400 w-4 text-center"></i> Parfum</a>
                                 </div>
                             </div>
                         </div>
