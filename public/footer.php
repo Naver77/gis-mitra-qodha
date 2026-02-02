@@ -21,9 +21,6 @@
                         <div class="bg-white rounded p-1 h-8 w-auto flex items-center justify-center shadow-lg">
                             <img src="assets/img/halal.png" class="h-full w-auto object-contain" alt="Halal">
                         </div>
-                        <div class="bg-white rounded p-1 h-8 w-auto flex items-center justify-center shadow-lg">
-                            <img src="assets/img/bpom.png" class="h-full w-auto object-contain" alt="BPOM">
-                        </div>
                     </div>
                 </div>
             </div>
