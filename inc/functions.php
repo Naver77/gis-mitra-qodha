@@ -54,21 +54,17 @@ function getProductStats() {
  * Data Harga Kemitraan Lengkap
  * Sesuai Dokumen: Poster - Price List Toko.pdf
  */
-function getPartnershipPricing() {
-    return [
-        // Format: Nama, HET, Modal Reseller, Modal Agen, Modal Distributor
-        ['Parfum Roll On (6ml)', 15000, 10000, 8000, 7000],
-        ['Parfum Sajadah (250ml)', 45000, 36000, 34000, 32000],
-        ['Dupa Pelor (Isi 40)', 20000, 17000, 16000, 14000],
-        ['Dupa Kerucut (Isi 50)', 25000, 22000, 21000, 20000],
-        ['Dupa Kerucut Mika (Isi 60)', 30000, 26000, 24000, 22000],
-        ['Dupa Maharaja (Premium)', 45000, 36000, 34000, 32000],
-        ['Hio Stick (Isi 20)', 15000, 11000, 9000, 8000],
-        ['Bukhur Pouch (100gr)', 25000, 22000, 21000, 19000],
-        ['Bukhur Kaca (50gr)', 60000, 45000, 43000, 40000],
-        ['Bukhur Kayu (50gr)', 65000, 45000, 43000, 40000],
-        ['Bukhur Travel (20gr)', 40000, 35000, 33000, 30000],
-    ];
+function getPricelistData($conn) {
+    $data = [];
+    $query = "SELECT * FROM tb_harga_kemitraan ORDER BY id_harga ASC";
+    $result = mysqli_query($conn, $query);
+    
+    if($result) {
+        while($row = mysqli_fetch_assoc($result)) {
+            $data[] = $row;
+        }
+    }
+    return $data;
 }
 
 function getHomeCategories() {

@@ -1,4 +1,4 @@
-<aside class="w-64 bg-brand-dark text-white flex flex-col transition-all duration-300 hidden md:flex">
+<aside class="w-64 bg-brand-dark text-white flex-col transition-all duration-300 hidden md:flex">
     <div class="h-16 flex items-center justify-center border-b border-gray-700 bg-gray-900/50">
         <h1 class="text-xl font-bold tracking-wider text-brand-gold">QODHA <span class="text-white text-sm font-normal">ADMIN</span></h1>
     </div>

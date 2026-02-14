@@ -56,8 +56,8 @@
                             <a href="https://shopee.co.id/qodha.id" target="_blank" class="group w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-300 hover:ring-2 hover:ring-[#ee4d2d]" title="Shopee">
                                 <img src="assets/img/shopee.png" class="w-6 h-6 object-contain" alt="Shopee">
                             </a>
-                            <a href="https://www.lazada.co.id/shop/qodha-id" target="_blank" class="group w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-300 hover:ring-2 hover:ring-[#0f146d]" title="Lazada">
-                                <img src="assets/img/lazada.png" class="w-6 h-6 object-contain" alt="Lazada">
+                            <a href="https://www.tiktok.com/@qodhaaromatic" target="_blank" class="group w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-300 hover:ring-2 hover:ring-[#0f146d]" title="TikTok">
+                                <img src="assets/img/tiktok.png" class="w-6 h-6 object-contain" alt="TikTok">
                             </a>
                         </div>
                     </div>
