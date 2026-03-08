@@ -52,7 +52,7 @@ export default function Header() {
 
   return (
     <>
-      <nav className={`${baseNavClass} ${hiddenClass} ${mobileFloatingClass} ${bgClass} ${shadowClass} h-[85px]`}>
+      <nav className={`${baseNavClass} ${hiddenClass} ${mobileFloatingClass} ${bgClass} ${shadowClass} h-21.25`}>
         <div className="w-full h-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="flex justify-between items-center h-full w-full">
             
@@ -79,7 +79,7 @@ export default function Header() {
                 <button className={`px-4 py-2 text-sm font-bold transition-all duration-300 rounded-full flex items-center gap-1 ${pathname.startsWith('/product') ? 'bg-brand-orange/10 text-brand-orange' : 'text-gray-600 hover:bg-brand-orange/10 hover:text-brand-orange'}`}>
                   Produk <i className="fa-solid fa-chevron-down text-[10px] mt-0.5 ml-1 transition-transform group-hover:rotate-180"></i>
                 </button>
-                <div className="absolute top-[75px] left-1/2 transform -translate-x-1/2 w-64 pt-2 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300">
+                <div className="absolute top-18.75 left-1/2 transform -translate-x-1/2 w-64 pt-2 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300">
                   <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden ring-1 ring-black ring-opacity-5 p-2">
                     <Link href="/products" className="block px-4 py-3 text-sm font-bold text-gray-800 rounded-xl hover:bg-brand-orange/10 hover:text-brand-orange transition mb-1">
                       <div className="flex items-center gap-3">
@@ -110,7 +110,7 @@ export default function Header() {
                 <button className={`px-4 py-2 text-sm font-bold transition-all duration-300 rounded-full flex items-center gap-1 ${['/about', '/faq', '/contact'].includes(pathname) ? 'bg-brand-orange/10 text-brand-orange' : 'text-gray-600 hover:bg-brand-orange/10 hover:text-brand-orange'}`}>
                   Bantuan <i className="fa-solid fa-chevron-down text-[10px] mt-0.5 ml-1 transition-transform group-hover:rotate-180"></i>
                 </button>
-                <div className="absolute top-[75px] right-0 w-64 pt-2 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300">
+                <div className="absolute top-18.75 right-0 w-64 pt-2 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300">
                   <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden ring-1 ring-black ring-opacity-5 flex flex-col p-2">
                     <Link href="/about" className="px-4 py-3 text-sm font-medium text-gray-600 rounded-xl hover:bg-brand-orange/10 hover:text-brand-orange transition flex items-center gap-3 mb-1">
                       <i className="fa-regular fa-building text-gray-400 text-lg"></i> Profil Qodha

@@ -42,7 +42,7 @@ export default function RootLayout({
         
         <Header />
         
-        <main className="flex-grow w-full relative flex flex-col pt-[85px]">
+        <main className="grow w-full relative flex flex-col pt-21.25">
           {children}
         </main>
 

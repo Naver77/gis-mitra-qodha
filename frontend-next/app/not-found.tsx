@@ -3,7 +3,7 @@ import React from 'react';
 
 export default function NotFound() {
   return (
-    <div className="min-h-[80vh] bg-gray-50 flex items-center justify-center px-4 pt-[85px]">
+    <div className="min-h-[80vh] bg-gray-50 flex items-center justify-center px-4 pt-21.25">
       <div className="max-w-md w-full text-center">
         
         {/* Dekorasi Visual */}
