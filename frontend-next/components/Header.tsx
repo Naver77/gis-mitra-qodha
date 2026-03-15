@@ -43,9 +43,7 @@ export default function Header() {
   const baseNavClass = "fixed z-50 transition-all duration-300";
   const hiddenClass = isHidden ? "-translate-y-full" : "translate-y-0";
   
-  const mobileFloatingClass = isScrolled 
-    ? "lg:w-full lg:top-0 lg:rounded-none lg:border-none lg:left-0 w-[90%] left-[5%] top-4 rounded-2xl border border-gray-200" 
-    : "w-full top-0 left-0 rounded-none border-none";
+  const mobileFloatingClass = "w-full top-0 left-0 rounded-none border-none";
   
   const bgClass = "bg-white/95 backdrop-blur-md border-b-2 border-brand-orange"; // Border bawah mengikuti warna oranye
   const shadowClass = isScrolled ? "shadow-md" : "";
