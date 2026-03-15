@@ -11,12 +11,14 @@ interface ProductRow {
 
 export async function GET() {
   try {
+    // FIX: Menggunakan process.env agar AMAN saat di-push ke GitHub
+    // Jika di hosting, ia membaca .env. Jika di lokal, ia pakai fallback Laragon.
     const connection = await mysql.createConnection({
-      host: '127.0.0.1',   
-      port: 3308,          
-      user: 'root',
-      password: '',        
-      database: 'db_qodha_gis' 
+      host: process.env.DB_HOST || '127.0.0.1',
+      port: Number(process.env.DB_PORT) || 3308, // Default 3308 sesuai Laragon lokal Anda
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'db_qodha_gis'
     });
 
     const [rows] = await connection.execute(`
@@ -34,7 +36,6 @@ export async function GET() {
     await connection.end();
 
     const formattedData = (rows as ProductRow[]).map((row) => {
-      // LOGIKA CERDAS: Deteksi apakah produk ini tergolong Parfum
       const isParfum = row.nama_kategori.toLowerCase().includes('parfum') || 
                        row.nama_kategori.toLowerCase().includes('kasturi');
 
@@ -46,8 +47,6 @@ export async function GET() {
         gambar: null,
         rating: 5.0,
         terjual: Math.floor(Math.random() * 500) + 50,
-        
-        // JIKA bukan parfum, data gender akan diubah menjadi NULL (dibuang)
         gender: isParfum ? row.gender : null, 
       };
     });
@@ -57,7 +56,7 @@ export async function GET() {
   } catch (error) {
     console.error('Database API Error:', error);
     return NextResponse.json(
-      { error: 'Gagal terhubung ke database. Cek port dan status MySQL.' },
+      { error: 'Gagal terhubung ke database. Periksa konfigurasi .env di hosting Anda.' },
       { status: 500 }
     );
   }
