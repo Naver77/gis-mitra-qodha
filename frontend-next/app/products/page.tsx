@@ -220,15 +220,15 @@ export default function ProductsPage() {
           </button>
 
           {/* FIX MOBILE: Kembali menjadi scroll horizontal dengan fitur Snap-X agar rapi */}
-          <div ref={shelfRef} className="flex overflow-x-auto pb-4 gap-3 md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth relative z-10 snap-x snap-mandatory mx-[-1rem] px-4 md:mx-0 md:px-1">
+          <div ref={shelfRef} className="flex overflow-x-auto pb-4 gap-3 md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth relative z-10 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-1">
             {items.map(prod => (
-              <div key={prod.id_produk} className="w-[150px] md:w-60 shrink-0 snap-start">
+              <div key={prod.id_produk} className="w-37.5 md:w-60 shrink-0 snap-start">
                 <ProductCard product={prod} mainCat={mainCat} />
               </div>
             ))}
             
             {/* Kartu "Lihat Semua" di ujung scroll */}
-            <div className="w-[130px] md:w-50 shrink-0 snap-start flex items-center justify-center">
+            <div className="w-32.5 md:w-50 shrink-0 snap-start flex items-center justify-center">
                <button onClick={() => { setActiveCategory(getMainCategory(title)); window.scrollTo(0,0); }} className="flex flex-col items-center justify-center gap-2 md:gap-3 text-gray-400 hover:text-brand-gold transition-all p-3 md:p-4 border-2 border-dashed border-gray-200 rounded-2xl md:rounded-3xl w-full h-full md:h-[80%] hover:bg-yellow-50 hover:border-brand-gold/50 group">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-white shadow-sm transition-transform group-hover:scale-110">
                     <i className="fa-solid fa-arrow-right text-base md:text-lg"></i>
@@ -270,7 +270,7 @@ export default function ProductsPage() {
     <div className="bg-gray-50 min-h-screen pb-20 pt-21.25">
       
       {/* HEADER SECTION */}
-      <section className="bg-gray-900 text-white pt-[calc(85px+2rem)] md:pt-[calc(85px+3rem)] pb-12 md:pb-20 px-4 relative overflow-hidden">
+      <section className="bg-gray-900 text-white pt-29.5 md:pt-33.25 pb-12 md:pb-20 px-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-gold rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
         
@@ -283,7 +283,7 @@ export default function ProductsPage() {
       </section>
 
       {/* FILTER TABS */}
-      <section className={`sticky z-40 transition-all duration-300 ${isHidden ? 'top-0' : 'top-[85px]'}`}>
+      <section className={`sticky z-40 transition-all duration-300 ${isHidden ? 'top-0' : 'top-21.25'}`}>
         <div className={`mx-auto transition-all duration-300 ${isSticky ? 'max-w-full px-0' : 'max-w-7xl px-4 sm:px-6 lg:px-8 -mt-6 md:-mt-8 relative'}`}>
           <div className={`bg-white/90 backdrop-blur-xl flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center transition-all duration-300 ${
             isSticky 
@@ -296,7 +296,7 @@ export default function ProductsPage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-300 flex-shrink-0 ${
+                  className={`px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-300 shrink-0 ${
                     isSticky ? 'rounded-lg' : 'rounded-xl'
                   } ${
                     activeCategory === cat 
@@ -418,7 +418,7 @@ export default function ProductsPage() {
         {/* BOTTOM CTA */}
         {!isLoading && !isError && (
           <div className="mt-8 md:mt-16 animate-fade-in-up px-4 sm:px-0 mb-8">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+            <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
               <div className="absolute -top-20 -right-20 w-48 h-48 md:w-64 md:h-64 bg-brand-gold/20 rounded-full blur-3xl pointer-events-none"></div>
               <div className="relative z-10 text-center md:text-left flex-1">
                 <h3 className="text-xl md:text-3xl font-extrabold text-white mb-2 md:mb-3">Bingung Memilih Aroma?</h3>
