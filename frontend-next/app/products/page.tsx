@@ -219,7 +219,6 @@ export default function ProductsPage() {
             <i className="fa-solid fa-chevron-left"></i>
           </button>
 
-          {/* FIX MOBILE: Kembali menjadi scroll horizontal dengan fitur Snap-X agar rapi */}
           <div ref={shelfRef} className="flex overflow-x-auto pb-4 gap-3 md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth relative z-10 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-1">
             {items.map(prod => (
               <div key={prod.id_produk} className="w-37.5 md:w-60 shrink-0 snap-start">
@@ -227,7 +226,6 @@ export default function ProductsPage() {
               </div>
             ))}
             
-            {/* Kartu "Lihat Semua" di ujung scroll */}
             <div className="w-32.5 md:w-50 shrink-0 snap-start flex items-center justify-center">
                <button onClick={() => { setActiveCategory(getMainCategory(title)); window.scrollTo(0,0); }} className="flex flex-col items-center justify-center gap-2 md:gap-3 text-gray-400 hover:text-brand-gold transition-all p-3 md:p-4 border-2 border-dashed border-gray-200 rounded-2xl md:rounded-3xl w-full h-full md:h-[80%] hover:bg-yellow-50 hover:border-brand-gold/50 group">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-white shadow-sm transition-transform group-hover:scale-110">
@@ -254,7 +252,6 @@ export default function ProductsPage() {
         <span className="text-[10px] md:text-xs bg-brand-orange/10 text-brand-orange px-2.5 py-1 md:px-3 md:py-1.5 rounded-full font-bold shrink-0">{items.length} Produk</span>
       </div>
       
-      {/* FIX MOBILE: Menjadi Grid 2 Kolom ("Dua orang masuk sekolah") */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
         {items.map(prod => (
           <div key={prod.id_produk} className="col-span-1">
@@ -267,14 +264,14 @@ export default function ProductsPage() {
 
   // --- RENDER UTAMA ---
   return (
-    <div className="bg-gray-50 min-h-screen pb-20 pt-21.25">
+    <div className="bg-gray-50 min-h-screen pb-20">
       
-      {/* HEADER SECTION */}
-      <section className="bg-gray-900 text-white pt-29.5 md:pt-33.25 pb-12 md:pb-20 px-4 relative overflow-hidden">
+      {/* HEADER SECTION - Dirombak agar Rata Tengah Sempurna & Menyentuh Ujung Atas */}
+      <section className="bg-gray-900 text-white min-h-[30vh] md:min-h-[40vh] flex flex-col items-center justify-center pt-21.25 pb-12 md:pb-16 px-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-gold rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
         
-        <div className="max-w-7xl mx-auto text-center relative z-10 animate-fade-in-up">
+        <div className="max-w-7xl mx-auto text-center relative z-10 animate-fade-in-up w-full mt-4 md:mt-0">
           <h1 className="text-3xl md:text-5xl font-extrabold mb-3 md:mb-4">Katalog <span className="text-brand-gold">Produk</span></h1>
           <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-lg px-2">
             Temukan wangi Sunnah favorit Anda. Dari Bukhur premium hingga Parfum non-alkohol, semua diracik dengan bahan alami terbaik.
@@ -283,7 +280,7 @@ export default function ProductsPage() {
       </section>
 
       {/* FILTER TABS */}
-      <section className={`sticky z-40 transition-all duration-300 ${isHidden ? 'top-0' : 'top-21.25'}`}>
+      <section className={`sticky z-40 transition-all duration-300 ${isHidden ? 'top-0' : 'top-20 md:top-21.25'}`}>
         <div className={`mx-auto transition-all duration-300 ${isSticky ? 'max-w-full px-0' : 'max-w-7xl px-4 sm:px-6 lg:px-8 -mt-6 md:-mt-8 relative'}`}>
           <div className={`bg-white/90 backdrop-blur-xl flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center transition-all duration-300 ${
             isSticky 
@@ -325,7 +322,7 @@ export default function ProductsPage() {
       </section>
 
       {/* RENDER KONTEN UTAMA */}
-      <section className="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8 md:mt-16">
+      <section className="max-w-7xl mx-auto sm:px-6 lg:px-8 mt-8 md:mt-12">
         
         {isLoading ? (
           <div className="text-center py-20 px-4">
@@ -356,17 +353,15 @@ export default function ProductsPage() {
             )}
           </div>
         ) : (
-          /* KANVAS GELAP (Full width di HP, Melengkung di Desktop) */
+          /* KANVAS GELAP */
           <div className="bg-gray-900 rounded-none sm:rounded-[3rem] px-4 py-8 sm:p-10 lg:p-12 shadow-2xl relative overflow-hidden animate-fade-in-up">
             
             <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.03] pointer-events-none"></div>
 
             <div className="relative z-10">
               
-              {/* LOGIKA CABANG: TAMPILAN "SEMUA" VS "FILTER KATEGORI" */}
               {activeCategory === "Semua" ? (
                 
-                // JIKA SEMUA: Tampilkan Scroll Samping (Shelf)
                 mainCategories
                   .filter(cat => cat !== "Semua" && groupedData[cat]) 
                   .map((mainCatName, index, array) => {
@@ -383,7 +378,6 @@ export default function ProductsPage() {
                         </div>
                         
                         {Object.entries(subCats).map(([subCatName, prods]) => (
-                          // Memanggil Component Scroll Samping
                           <ProductShelf key={subCatName} title={subCatName} items={prods} mainCat={mainCatName} />
                         ))}
                       </div>
@@ -392,7 +386,6 @@ export default function ProductsPage() {
 
               ) : (
 
-                // JIKA DIFILTER: Tampilkan Grid Ke Bawah (Grid 2 Kolom)
                 groupedData[activeCategory] ? (
                   <div>
                     <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-8">
@@ -403,7 +396,6 @@ export default function ProductsPage() {
                     </div>
 
                     {Object.entries(groupedData[activeCategory]).map(([subCatName, prods]) => (
-                      // Memanggil Component Grid Ke Bawah
                       <ProductGrid key={subCatName} title={subCatName} items={prods} mainCat={activeCategory} />
                     ))}
                   </div>

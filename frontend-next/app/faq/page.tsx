@@ -38,7 +38,7 @@ export default function FAQPage() {
   }, [searchQuery, activeTab]);
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-20 pt-[85px]">
+    <div className="bg-gray-50 min-h-screen pb-20 pt-21.25">
       
       {/* HEADER SEARCH */}
       <section className="relative bg-gray-900 py-24 px-4 overflow-hidden">
@@ -86,7 +86,7 @@ export default function FAQPage() {
         {/* LIST */}
         <div className="space-y-8">
           {filteredData.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-[2rem] border border-gray-100 shadow-sm animate-fade-in-up">
+            <div className="text-center py-16 bg-white rounded-4xl border border-gray-100 shadow-sm animate-fade-in-up">
               <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-300 text-3xl">
                 <i className="fa-solid fa-face-frown-open"></i>
               </div>
@@ -109,7 +109,7 @@ export default function FAQPage() {
                     <details key={idx} className="group bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition duration-300 [&_summary::-webkit-details-marker]:hidden">
                       <summary className="flex items-center justify-between w-full p-5 md:p-6 cursor-pointer select-none bg-white relative z-10 list-none">
                         <h4 className="text-base font-bold text-gray-900 pr-8 group-hover:text-brand-gold transition">{item.q}</h4>
-                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-open:bg-brand-gold group-open:text-gray-900 transition flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-open:bg-brand-gold group-open:text-gray-900 transition shrink-0">
                           <i className="fa-solid fa-plus transition-transform duration-300 group-open:rotate-45"></i>
                         </div>
                       </summary>
