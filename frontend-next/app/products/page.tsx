@@ -1,46 +1,12 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
-interface Product {
-  id_produk: string | number;
-  nama_produk: string;
-  nama_kategori: string;
-  harga: number;
-  gender?: string | null; 
-  gambar?: string | null;
-  rating?: number;
-  terjual?: number;
-}
-
-const mainCategories = ["Semua", "Bukhur", "Dupa", "Hio", "Parfum", "Perlengkapan", "Paket Hemat"];
-
-const getMainCategory = (subCategoryName: string) => {
-  const lower = subCategoryName.toLowerCase();
-  if (lower.includes('bukhur')) return 'Bukhur';
-  if (lower.includes('hio')) return 'Hio'; 
-  if (lower.includes('dupa') || lower.includes('pelor')) return 'Dupa';
-  if (lower.includes('parfum') || lower.includes('kasturi')) return 'Parfum';
-  if (lower.includes('paket')) return 'Paket Hemat';
-  if (lower.includes('aksesoris') || lower.includes('prapen') || lower.includes('perlengkapan') || lower.includes('mabkhara')) return 'Perlengkapan';
-  return 'Lainnya';
-};
-
-const getCategoryIcon = (catName: string) => {
-  const lower = catName.toLowerCase();
-  if (lower.includes('bukhur')) return 'fa-fire-burner';
-  if (lower.includes('dupa')) return 'fa-spa';
-  if (lower.includes('hio')) return 'fa-seedling';
-  if (lower.includes('parfum')) return 'fa-bottle-droplet';
-  if (lower.includes('paket')) return 'fa-gift';
-  if (lower.includes('perlengkapan') || lower.includes('aksesoris')) return 'fa-shapes';
-  return 'fa-crown'; 
-};
-
-const formatRupiah = (angka: number) => {
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-};
+// Import semua alat & komponen yang sudah dipisah
+import { Product } from '@/types/product';
+import { mainCategories, getMainCategory, getCategoryIcon } from '@/lib/product-utils';
+import { ProductShelf } from '@/components/products/ProductShelf';
+import { ProductGrid } from '@/components/products/ProductGrid';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -117,160 +83,12 @@ export default function ProductsPage() {
     return groups;
   }, [products, searchQuery]);
 
-
-  // --- KOMPONEN KARTU PRODUK UNIVERSAL ---
-  const ProductCard = ({ product, mainCat }: { product: Product, mainCat: string }) => {
-    const isPremium = product.nama_kategori.toLowerCase().includes('premium bukhur qodha');
-
-    let badgeText = null;
-    let badgeClass = "";
-
-    if (isPremium) {
-      badgeText = 'Premium';
-      badgeClass = 'bg-gray-900 text-brand-gold border border-brand-gold/30';
-    } else if (mainCat === 'Parfum' && product.gender) {
-      badgeText = product.gender;
-      if (product.gender === 'pria') badgeClass = 'bg-blue-100 text-blue-700';
-      else if (product.gender === 'wanita') badgeClass = 'bg-pink-100 text-pink-700';
-      else badgeClass = 'bg-emerald-100 text-emerald-700'; 
-    }
-
-    return (
-      <div className={`rounded-2xl md:rounded-3xl overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-1 md:hover:-translate-y-1.5 transition-all duration-300 group flex flex-col h-full ${isPremium ? 'bg-gray-900 border-brand-gold/30' : 'bg-white border-gray-100'}`}>
-        <div className={`relative aspect-square overflow-hidden flex items-center justify-center ${isPremium ? 'bg-gray-800' : 'bg-gray-50'}`}>
-          
-          {badgeText && (
-            <div className={`absolute top-2 left-2 md:top-4 md:left-4 z-10 text-[8px] md:text-[9px] font-extrabold px-2 py-1 md:px-3 md:py-1.5 rounded-full uppercase tracking-wider shadow-md ${badgeClass}`}>
-              {badgeText}
-            </div>
-          )}
-          
-          {product.gambar ? (
-            <img 
-              src={product.gambar} 
-              alt={product.nama_produk} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center opacity-10 grayscale pointer-events-none">
-               <img src="/assets/img/qodhablack.png" alt="Qodha" className={`w-1/2 h-auto object-contain ${isPremium ? 'invert opacity-50' : ''}`} />
-            </div>
-          )}
-
-          <div className="hidden md:flex absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center rounded-t-3xl">
-            <Link href={`/products/${product.id_produk}`} className="bg-white text-gray-900 font-extrabold text-sm px-6 py-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl hover:bg-brand-gold hover:text-white flex items-center gap-2">
-              Lihat Detail <i className="fa-solid fa-arrow-right"></i>
-            </Link>
-          </div>
-        </div>
-
-        <div className="p-3 md:p-5 flex flex-col grow">
-          <div className="flex justify-between items-start mb-1.5 md:mb-2">
-            <span className={`text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 md:py-1 rounded-md uppercase tracking-wider line-clamp-1 mr-1 md:mr-2 ${isPremium ? 'bg-brand-gold/20 text-brand-gold' : 'bg-brand-orange/10 text-brand-orange'}`}>
-              {product.nama_kategori}
-            </span>
-            <div className="flex items-center gap-1 text-[9px] md:text-[10px] font-bold text-yellow-500 shrink-0">
-              <i className="fa-solid fa-star"></i> {product.rating || "5.0"}
-            </div>
-          </div>
-          
-          <h3 className={`font-extrabold mb-1.5 md:mb-2 leading-snug transition-colors line-clamp-2 text-xs md:text-base ${isPremium ? 'text-white group-hover:text-brand-gold' : 'text-gray-900 group-hover:text-brand-gold'}`}>
-            {product.nama_produk}
-          </h3>
-          
-          <div className={`flex flex-col xl:flex-row xl:items-end justify-between mt-auto pt-2 md:pt-4 border-t gap-1 md:gap-2 ${isPremium ? 'border-gray-800' : 'border-gray-50'}`}>
-            <span className={`text-sm md:text-lg font-black leading-none ${isPremium ? 'text-brand-gold' : 'text-brand-green'}`}>{formatRupiah(product.harga)}</span>
-            <span className={`text-[9px] md:text-xs font-medium ${isPremium ? 'text-gray-400' : 'text-gray-400'}`}>{product.terjual || 0} Terjual</span>
-          </div>
-          
-          <Link href={`/products/${product.id_produk}`} className={`md:hidden w-full mt-3 text-center py-2 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-colors shadow-sm ${isPremium ? 'bg-brand-gold text-gray-900 active:bg-yellow-500' : 'bg-gray-900 text-white active:bg-brand-gold active:text-gray-900'}`}>
-            Beli
-          </Link>
-        </div>
-      </div>
-    );
-  };
-
-  // --- KOMPONEN 1: SHELF (TAMPILAN "SEMUA" - SCROLL SAMPING) ---
-  const ProductShelf = ({ title, items, mainCat }: { title: string, items: Product[], mainCat: string }) => {
-    const shelfRef = useRef<HTMLDivElement>(null);
-    const scroll = (direction: 'left' | 'right') => {
-      if (shelfRef.current) {
-        shelfRef.current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
-      }
-    };
-
-    return (
-      <div className="bg-white rounded-2xl md:rounded-4xl p-4 md:p-8 shadow-lg border border-gray-100 mb-6 md:mb-10 relative group/shelf">
-        <div className="flex items-center justify-between mb-4 md:mb-6 pb-3 md:pb-4 border-b border-gray-50">
-          <h3 className="text-lg md:text-2xl font-black text-gray-800 leading-tight">{title}</h3>
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] md:text-xs bg-brand-orange/10 text-brand-orange px-2.5 py-1 md:px-3 md:py-1.5 rounded-full font-bold shrink-0">{items.length} Varian</span>
-            {items.length > 2 && (
-              <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest shrink-0 animate-pulse md:animate-none">
-                <i className="fa-solid fa-arrows-left-right"></i> Geser
-              </span>
-            )}
-          </div>
-        </div>
-        
-        <div className="relative">
-          <button onClick={() => scroll('left')} className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 backdrop-blur rounded-full shadow-xl items-center justify-center text-gray-600 hover:text-brand-gold hover:scale-110 transition-all opacity-0 group-hover/shelf:opacity-100 -ml-5 border border-gray-100">
-            <i className="fa-solid fa-chevron-left"></i>
-          </button>
-
-          <div ref={shelfRef} className="flex overflow-x-auto pb-4 gap-3 md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] scroll-smooth relative z-10 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-1">
-            {items.map(prod => (
-              <div key={prod.id_produk} className="w-37.5 md:w-60 shrink-0 snap-start">
-                <ProductCard product={prod} mainCat={mainCat} />
-              </div>
-            ))}
-            
-            <div className="w-32.5 md:w-50 shrink-0 snap-start flex items-center justify-center">
-               <button onClick={() => { setActiveCategory(getMainCategory(title)); window.scrollTo(0,0); }} className="flex flex-col items-center justify-center gap-2 md:gap-3 text-gray-400 hover:text-brand-gold transition-all p-3 md:p-4 border-2 border-dashed border-gray-200 rounded-2xl md:rounded-3xl w-full h-full md:h-[80%] hover:bg-yellow-50 hover:border-brand-gold/50 group">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-white shadow-sm transition-transform group-hover:scale-110">
-                    <i className="fa-solid fa-arrow-right text-base md:text-lg"></i>
-                  </div>
-                  <span className="text-[10px] md:text-xs font-bold text-center tracking-wide leading-tight">Lihat Semua<br/>Varian</span>
-               </button>
-            </div>
-          </div>
-
-          <button onClick={() => scroll('right')} className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 backdrop-blur rounded-full shadow-xl items-center justify-center text-gray-600 hover:text-brand-gold hover:scale-110 transition-all opacity-0 group-hover/shelf:opacity-100 -mr-5 border border-gray-100">
-            <i className="fa-solid fa-chevron-right"></i>
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // --- KOMPONEN 2: GRID (TAMPILAN "TERFILTER" - KE BAWAH) ---
-  const ProductGrid = ({ title, items, mainCat }: { title: string, items: Product[], mainCat: string }) => (
-    <div className="bg-white rounded-2xl md:rounded-4xl p-4 md:p-8 shadow-lg border border-gray-100 mb-6 md:mb-10">
-      <div className="flex items-center justify-between mb-4 md:mb-6 border-b border-gray-50 pb-3 md:pb-4">
-        <h3 className="text-lg md:text-2xl font-black text-gray-800 leading-tight">{title}</h3>
-        <span className="text-[10px] md:text-xs bg-brand-orange/10 text-brand-orange px-2.5 py-1 md:px-3 md:py-1.5 rounded-full font-bold shrink-0">{items.length} Produk</span>
-      </div>
-      
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
-        {items.map(prod => (
-          <div key={prod.id_produk} className="col-span-1">
-            <ProductCard product={prod} mainCat={mainCat} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // --- RENDER UTAMA ---
   return (
-    // Penambahan -mt-[100px] untuk "menarik" layar ke atas, menutupi padding bawaan dari layout.tsx
-    <div className="bg-gray-50 min-h-screen pb-20 -mt-25 md:-mt-30">
+    <div className="bg-gray-50 min-h-screen pb-20 -mt-[100px] md:-mt-[120px]">
       
-      {/* HEADER SECTION - Dirombak agar Rata Tengah Sempurna & Menyentuh Ujung Atas */}
-      {/* Penambahan pt-[140px] md:pt-[160px] untuk mengembalikan posisi teks judul agar tetap rata tengah secara vertikal */}
-      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pt-35 md:pt-40 pb-12 md:pb-16 px-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
+      {/* HEADER SECTION */}
+      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pt-[140px] md:pt-[160px] pb-12 md:pb-16 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('[https://www.transparenttextures.com/patterns/stardust.png](https://www.transparenttextures.com/patterns/stardust.png)')] opacity-10 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto text-center relative z-10 animate-fade-in-up w-full">
@@ -282,7 +100,7 @@ export default function ProductsPage() {
       </section>
 
       {/* FILTER TABS */}
-      <section className={`sticky z-40 transition-all duration-300 ${isHidden ? 'top-0' : 'top-20 md:top-21.25'}`}>
+      <section className={`sticky z-40 transition-all duration-300 ${isHidden ? 'top-0' : 'top-[80px] md:top-[85px]'}`}>
         <div className={`mx-auto transition-all duration-300 ${isSticky ? 'max-w-full px-0' : 'max-w-7xl px-4 sm:px-6 lg:px-8 -mt-6 md:-mt-8 relative'}`}>
           <div className={`bg-white/90 backdrop-blur-xl flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center transition-all duration-300 ${
             isSticky 
@@ -355,11 +173,8 @@ export default function ProductsPage() {
             )}
           </div>
         ) : (
-          /* KANVAS GELAP */
           <div className="bg-gray-900 rounded-none sm:rounded-[3rem] px-4 py-8 sm:p-10 lg:p-12 shadow-2xl relative overflow-hidden animate-fade-in-up">
-            
-            <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.03] pointer-events-none"></div>
-
+            <div className="absolute top-0 right-0 w-full h-full bg-[url('[https://www.transparenttextures.com/patterns/stardust.png](https://www.transparenttextures.com/patterns/stardust.png)')] opacity-[0.03] pointer-events-none"></div>
             <div className="relative z-10">
               
               {activeCategory === "Semua" ? (
@@ -380,7 +195,7 @@ export default function ProductsPage() {
                         </div>
                         
                         {Object.entries(subCats).map(([subCatName, prods]) => (
-                          <ProductShelf key={subCatName} title={subCatName} items={prods} mainCat={mainCatName} />
+                          <ProductShelf key={subCatName} title={subCatName} items={prods} mainCat={mainCatName} setActiveCategory={setActiveCategory} />
                         ))}
                       </div>
                     );
@@ -412,7 +227,7 @@ export default function ProductsPage() {
         {/* BOTTOM CTA */}
         {!isLoading && !isError && (
           <div className="mt-8 md:mt-16 animate-fade-in-up px-4 sm:px-0 mb-8">
-            <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl md:rounded-4xl p-6 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
               <div className="absolute -top-20 -right-20 w-48 h-48 md:w-64 md:h-64 bg-brand-gold/20 rounded-full blur-3xl pointer-events-none"></div>
               <div className="relative z-10 text-center md:text-left flex-1">
                 <h3 className="text-xl md:text-3xl font-extrabold text-white mb-2 md:mb-3">Bingung Memilih Aroma?</h3>
@@ -428,7 +243,6 @@ export default function ProductsPage() {
             </div>
           </div>
         )}
-
       </section>
     </div>
   );
