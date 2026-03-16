@@ -264,14 +264,16 @@ export default function ProductsPage() {
 
   // --- RENDER UTAMA ---
   return (
-    <div className="bg-gray-50 min-h-screen pb-20">
+    // Penambahan -mt-[100px] untuk "menarik" layar ke atas, menutupi padding bawaan dari layout.tsx
+    <div className="bg-gray-50 min-h-screen pb-20 -mt-25 md:-mt-30">
       
       {/* HEADER SECTION - Dirombak agar Rata Tengah Sempurna & Menyentuh Ujung Atas */}
-      <section className="bg-gray-900 text-white min-h-[30vh] md:min-h-[40vh] flex flex-col items-center justify-center pt-21.25 pb-12 md:pb-16 px-4 relative overflow-hidden">
+      {/* Penambahan pt-[140px] md:pt-[160px] untuk mengembalikan posisi teks judul agar tetap rata tengah secara vertikal */}
+      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pt-35 md:pt-40 pb-12 md:pb-16 px-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
         
-        <div className="max-w-7xl mx-auto text-center relative z-10 animate-fade-in-up w-full mt-4 md:mt-0">
+        <div className="max-w-7xl mx-auto text-center relative z-10 animate-fade-in-up w-full">
           <h1 className="text-3xl md:text-5xl font-extrabold mb-3 md:mb-4">Katalog <span className="text-brand-gold">Produk</span></h1>
           <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-lg px-2">
             Temukan wangi Sunnah favorit Anda. Dari Bukhur premium hingga Parfum non-alkohol, semua diracik dengan bahan alami terbaik.
