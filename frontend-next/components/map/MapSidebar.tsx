@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { Mitra } from '@/lib/geo-utils';
 
@@ -36,13 +35,17 @@ export default function MapSidebar({
   setShowGuide
 }: MapSidebarProps) {
   
-  // Mencari data mitra yang sedang aktif/dipilih
-  const selectedMitra = activeMarker ? processedMitra.find(m => m.id === activeMarker) : null;
+  // FIX CRITICAL BUG: Memastikan id diubah ke String agar pasti cocok (mencegah bug tipe data)
+  const selectedMitra = activeMarker 
+    ? processedMitra.find(m => String(m.id) === String(activeMarker)) 
+    : null;
 
   return (
     <div className="w-full md:w-1/3 h-[50dvh] md:h-full flex flex-col bg-white shadow-2xl z-20 border-r border-gray-100 relative">
       
-      {/* HEADER SIDEBAR (Tetap Tampil Sebagai Kendali Utama) */}
+      {/* =========================================
+          HEADER SIDEBAR (STATIS & SELALU TAMPIL)
+          ========================================= */}
       <div className="p-4 md:p-5 border-b border-gray-100 bg-white/95 backdrop-blur z-10 shrink-0">
         
         <div className="flex justify-between items-center mb-4">
@@ -121,15 +124,17 @@ export default function MapSidebar({
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* AREA KONTEN (Switch Antara List vs Detail) */}
+      {/* =========================================
+          AREA KONTEN (DINAMIS: LIST ATAU DETAIL)
+          ========================================= */}
       {selectedMitra ? (
         
-        // --- 1. TAMPILAN DETAIL MITRA ---
+        // --- A. TAMPILAN DETAIL MITRA (MUNCUL SAAT DIKLIK) ---
         <div className="flex-1 overflow-y-auto p-4 md:p-5 bg-gray-50/50 hide-scrollbar flex flex-col animate-fade-in-up">
           
+          {/* Tombol Kembali ke Daftar (Mengosongkan activeMarker) */}
           <button 
             onClick={() => handlePartnerClick('')} 
             className="mb-4 text-xs font-bold text-gray-500 hover:text-gray-900 transition flex items-center gap-2 w-fit px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm"
@@ -137,12 +142,14 @@ export default function MapSidebar({
             <i className="fa-solid fa-arrow-left"></i> Kembali ke Daftar
           </button>
 
-          <div className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden flex-1 flex flex-col relative">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex-1 flex flex-col relative">
             
-            {/* Foto Placeholder Toko */}
-            <div className="h-32 md:h-40 bg-gray-200 relative shrink-0">
+            {/* Foto Placeholder */}
+            <div className="h-32 bg-gray-200 relative shrink-0">
+              {/* Eslint disable untuk img karena ini cuma placeholder external */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
-                src={`https://placehold.co/600x300/f3f4f6/a1a1aa?text=Toko+${selectedMitra.nama_toko.replace(/\s/g, '+')}`} 
+                src={`https://placehold.co/600x300/f3f4f6/a1a1aa?text=Foto+${selectedMitra.nama_toko.replace(/\s/g, '+')}`} 
                 alt="Foto Toko" 
                 className="w-full h-full object-cover" 
               />
@@ -154,36 +161,35 @@ export default function MapSidebar({
               </div>
             </div>
 
-            {/* Informasi Detail (Tanpa No HP) */}
+            {/* Konten Detail Lengkap */}
             <div className="p-5 flex flex-col flex-1">
                <h2 className="text-xl font-extrabold text-gray-900 mb-2 leading-tight">{selectedMitra.nama_toko}</h2>
                
-               <div className="flex flex-wrap items-center gap-2 text-xs mb-6">
+               <div className="flex flex-wrap items-center gap-2 text-xs mb-5">
                   <span className="font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">
                     <i className="fa-solid fa-map-pin mr-1 text-gray-400"></i> {selectedMitra.kecamatan}
                   </span>
                   {selectedMitra.distance && (
                     <span className="font-bold text-brand-orange bg-orange-50 border border-orange-100 px-2 py-1 rounded-md">
-                      <i className="fa-solid fa-location-arrow mr-1"></i> {(selectedMitra.distance / 1000).toFixed(1)} KM
+                      <i className="fa-solid fa-location-arrow mr-1"></i> {(selectedMitra.distance).toFixed(1)} KM
                     </span>
                   )}
                </div>
 
                <div className="mb-6 flex-1">
-                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alamat Lengkap</h4>
-                 <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Alamat Lengkap</h4>
+                 <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
                    {selectedMitra.alamat_lengkap}
                  </p>
                </div>
 
-               {/* Verifikasi Badge */}
                <div className="flex items-center gap-2 text-[10px] md:text-xs text-green-700 font-bold bg-green-50 p-3 rounded-xl border border-green-100 justify-center">
                  <i className="fa-solid fa-certificate text-lg"></i> Mitra Resmi & Terverifikasi
                </div>
             </div>
           </div>
 
-          {/* Tombol Hubungi Terpusat di Bawah */}
+          {/* Tombol Hubungi EKSKLUSIF hanya ada di Detail! */}
           <div className="mt-4 shrink-0">
             <button 
               onClick={() => triggerContactModal(selectedMitra, selectedMitra.distance)} 
@@ -191,13 +197,13 @@ export default function MapSidebar({
             >
               <i className="fa-solid fa-headset text-lg group-hover:scale-110 transition-transform"></i> Hubungi via Pusat
             </button>
-            <p className="text-center text-[10px] text-gray-400 mt-2 font-medium">Layanan ini akan menghubungkan Anda ke CS Qodha Pusat.</p>
+            <p className="text-center text-[10px] text-gray-400 mt-2 font-medium">Layanan ini menghubungkan Anda ke CS Qodha Pusat demi keamanan data.</p>
           </div>
         </div>
 
       ) : (
 
-        // --- 2. TAMPILAN DAFTAR MITRA (List View) ---
+        // --- B. TAMPILAN DAFTAR MITRA (LIST VIEW) ---
         <div className="flex-1 overflow-y-auto p-4 md:p-5 bg-gray-50/50 hide-scrollbar space-y-3">
           <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">
             {processedMitra.length} Mitra Ditemukan {activeRadius > 0 && userLoc ? `dalam ${activeRadius} KM` : ''}
@@ -210,54 +216,64 @@ export default function MapSidebar({
             </div>
           ) : (
             processedMitra.map((mitra, index) => (
+              
+              // Kartu List: Tanpa tombol hubungi, Alamat Lengkap Tampil!
               <div 
                 key={mitra.id} 
-                onClick={() => handlePartnerClick(mitra.id)}
-                className="bg-white p-4 rounded-2xl cursor-pointer transition-all duration-300 transform border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-brand-gold/30 group"
+                onClick={() => handlePartnerClick(String(mitra.id))} // Konversi ke string agar klik selalu berhasil
+                className="bg-white p-4 rounded-xl cursor-pointer transition-all duration-300 transform border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-brand-gold/50 group flex gap-4"
               >
-                <div className="flex items-center gap-4">
-                  {/* Penomoran Bulat di Kiri */}
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0 shadow-inner transition-colors duration-300 
-                    ${mitra.level === 'Distributor' ? 'bg-yellow-100 text-yellow-700' : 
-                      mitra.level === 'Agen' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
-                    }`}>
-                    {index + 1}
+                {/* KIRI: Penomoran */}
+                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0 shadow-inner transition-colors duration-300 
+                  ${mitra.level === 'Distributor' ? 'bg-yellow-100 text-yellow-700' : 
+                    mitra.level === 'Agen' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                  {index + 1}
+                </div>
+
+                {/* KANAN: Informasi Ringkas */}
+                <div className="flex-1">
+                  <h4 className="font-extrabold text-sm leading-tight mb-1 text-gray-900 group-hover:text-brand-gold transition-colors">
+                    {mitra.nama_toko}
+                  </h4>
+                  
+                  {/* Tags Info */}
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className={`px-2 py-0.5 rounded uppercase font-extrabold text-[8px] tracking-wider border ${
+                        mitra.level === 'Distributor' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' : 
+                        mitra.level === 'Agen' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'
+                      }`}>
+                      {mitra.level}
+                    </span>
+                    <span className="text-gray-200">|</span>
+                    <span className="font-bold text-gray-500 text-[10px]"><i className="fa-solid fa-map-pin text-gray-400 mr-1"></i> {mitra.kecamatan}</span>
+                    
+                    {userLoc && (
+                      <>
+                        <span className="text-gray-200">|</span>
+                        <span className="font-bold text-brand-orange text-[10px] bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">
+                          <i className="fa-solid fa-location-arrow mr-1"></i> {(mitra.distance)?.toFixed(1)} KM
+                        </span>
+                      </>
+                    )}
                   </div>
 
-                  {/* Konten Kanan (Lebih Padat) */}
-                  <div className="flex-1">
-                    <h4 className="font-extrabold text-sm leading-tight mb-1 text-gray-800 group-hover:text-brand-gold transition-colors">
-                      {mitra.nama_toko}
-                    </h4>
-                    
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded uppercase font-extrabold text-[8px] tracking-wider border ${
-                          mitra.level === 'Distributor' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' : 
-                          mitra.level === 'Agen' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'
-                        }`}>
-                        {mitra.level}
-                      </span>
-                      <span className="text-gray-200">|</span>
-                      <span className="font-bold text-gray-500 text-[10px]"><i className="fa-solid fa-map-pin text-gray-400 mr-1"></i> {mitra.kecamatan}</span>
-                      
-                      {userLoc && (
-                        <>
-                          <span className="text-gray-200">|</span>
-                          <span className="font-bold text-brand-orange text-[10px] bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100"><i className="fa-solid fa-location-arrow mr-1"></i> {mitra.distance?.toFixed(1)} KM</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Icon Chevron (Indikator bisa di-klik) */}
-                  <div className="text-gray-300 group-hover:text-brand-gold transition-colors shrink-0">
-                    <i className="fa-solid fa-chevron-right text-sm"></i>
-                  </div>
+                  {/* Sesuai Permintaan: Alamat Lengkap Tetap Muncul di List! */}
+                  <p className="text-[11px] text-gray-500 leading-relaxed pr-2">
+                    {mitra.alamat_lengkap}
+                  </p>
+                </div>
+                
+                {/* Indikator Panah Kanan (Samsung Style) */}
+                <div className="flex items-center justify-center text-gray-300 group-hover:text-brand-gold transition-colors shrink-0">
+                  <i className="fa-solid fa-chevron-right text-sm"></i>
                 </div>
               </div>
+
             ))
           )}
         </div>
+
       )}
     </div>
   );
