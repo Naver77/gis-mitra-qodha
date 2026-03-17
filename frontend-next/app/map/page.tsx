@@ -8,10 +8,17 @@ import MapSidebar from '@/components/map/MapSidebar';
 import { Mitra, mockMitra, calculateHaversineDistance } from '@/lib/geo-utils';
 
 // IMPORT DINAMIS: Mencegah error 'window is not defined' saat render Leaflet di Next.js SSR
-const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false });
+const MapView = dynamic(() => import('@/components/map/MapView'), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
+    </div>
+  )
+});
 
 export default function PetaKemitraanPage() {
-  // State Utama Data (Dihapus setMitraList untuk menghindari ESLint Warning)
+  // State Utama Data (Tanpa setMitraList agar bebas ESLint warning)
   const [mitraList] = useState<Mitra[]>(mockMitra);
   const [userLoc, setUserLoc] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -6.200, lng: 106.816}); 
@@ -30,7 +37,7 @@ export default function PetaKemitraanPage() {
 
   // 1. Eksekusi GPS Otomatis saat pertama kali buka
   useEffect(() => {
-    // Penambahan pengecekan typeof window untuk menghindari error SSR Next.js
+    // Pengecekan typeof window untuk keamanan SSR Next.js
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -107,8 +114,7 @@ export default function PetaKemitraanPage() {
   // Tampilan Panduan Layar Penuh
   if (showGuide) {
     return (
-      // Diperbarui: pt-[85px] menjadi pt-21.25, pt-[100px] menjadi pt-25
-      <div className="min-h-screen bg-gray-50 pt-21.25 md:pt-25 px-4 pb-20">
+      <div className="min-h-screen bg-gray-50 pt-21.25 px-4 pb-20">
         <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8 md:p-12 animate-fade-in-up border border-gray-100">
           <div className="flex justify-between items-start mb-8 border-b pb-6">
             <div>
@@ -161,11 +167,11 @@ export default function PetaKemitraanPage() {
     );
   }
 
-  // TAMPILAN UTAMA (Peta & Sidebar)
+  // TAMPILAN UTAMA (Sidebar Kiri & Peta Kanan)
   return (
-    // Diperbarui: pt-[85px] menjadi pt-21.25 dan h-[100dvh] menjadi h-dvh
     <div className="pt-21.25 h-dvh w-full flex flex-col md:flex-row overflow-hidden bg-white z-40 relative">
       
+      {/* Komponen Sidebar yang sudah Anda perbarui */}
       <MapSidebar 
         processedMitra={processedMitra}
         activeLevel={activeLevel}
@@ -183,6 +189,7 @@ export default function PetaKemitraanPage() {
         setShowGuide={setShowGuide}
       />
 
+      {/* Komponen Peta Leaflet yang sudah bersih dari peringatan ESLint */}
       <MapView 
         processedMitra={processedMitra}
         mapCenter={mapCenter}

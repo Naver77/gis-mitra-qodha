@@ -47,7 +47,7 @@ export default function MapSidebar({
       {/* Header Sidebar (Sticky Filter) */}
       <div className="p-4 md:p-6 border-b border-gray-100 bg-white/95 backdrop-blur z-10 shrink-0">
         <button onClick={() => setShowGuide(true)} className="w-full flex items-center justify-between bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl mb-4 hover:bg-yellow-100 transition-colors group">
-          <span className="font-bold text-sm"><i className="fa-solid fa-circle-info mr-2 text-brand-gold"></i> Informasi & Panduan Level</span>
+          <span className="font-bold text-sm"><i className="fa-solid fa-circle-info mr-2 text-brand-gold"></i> Informasi & Panduan Penggunaan</span>
           <i className="fa-solid fa-chevron-right text-xs group-hover:translate-x-1 transition-transform"></i>
         </button>
 

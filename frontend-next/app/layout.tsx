@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
+// 1. IMPORT HOOK PENDETEKSI URL
+import { usePathname } from "next/navigation"; 
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -20,6 +22,12 @@ export default function RootLayout({
 }>) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContext, setModalContext] = useState('');
+  
+  // 2. PANTAU URL SAAT INI
+  const pathname = usePathname(); 
+  
+  // 3. BUAT VARIABEL LOGIKA: Bernilai 'true' HANYA jika sedang di halaman peta
+  const isMapPage = pathname === '/map';
 
   const triggerLeadModal = (context: string) => {
     setModalContext(context);
@@ -34,17 +42,19 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
       
-      <body className={`${plusJakartaSans.className} flex flex-col min-h-screen bg-gray-50 text-gray-800 antialiased selection:bg-brand-orange selection:text-white`}>
+      {/* PERBAIKAN: Jika sedang di halaman peta, paksa body agar tidak bisa di-scroll (overflow-hidden) */}
+      <body className={`${plusJakartaSans.className} flex flex-col min-h-screen bg-gray-50 text-gray-800 antialiased selection:bg-brand-orange selection:text-white ${isMapPage ? 'overflow-hidden' : ''}`}>
         
         <Header />
         
-        {/* PERBAIKAN EXPERT: 'pt-21.25' DIHAPUS. 
-            Sekarang setiap halaman bebas mengatur batas atasnya sendiri (Edge-to-Edge) */}
         <main className="grow w-full relative flex flex-col">
           {children}
         </main>
 
-        <Footer onFloatingWaClick={() => triggerLeadModal("Pertanyaan Umum (Dari Tombol Melayang Bawah)")} />
+        {/* 4. LOGIKA KONDISIONAL: Footer BESAR HANYA muncul jika BUKAN di halaman peta */}
+        {!isMapPage && (
+          <Footer onFloatingWaClick={() => triggerLeadModal("Pertanyaan Umum (Dari Tombol Melayang Bawah)")} />
+        )}
 
         <LeadModal 
           isOpen={isModalOpen} 
