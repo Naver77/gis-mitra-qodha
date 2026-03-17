@@ -2,11 +2,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
-// Import semua alat & komponen yang sudah dipisah
+// Import komponen pendukung Anda
 import { Product } from '@/types/product';
 import { mainCategories, getMainCategory, getCategoryIcon } from '@/lib/product-utils';
 import { ProductShelf } from '@/components/products/ProductShelf';
 import { ProductGrid } from '@/components/products/ProductGrid';
+
+// FIX 1: Import Server Action langsung alih-alih menggunakan fetch API
+import { getProdukList } from '@/app/admin/produk/actions';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -43,24 +46,20 @@ export default function ProductsPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // FIX 2: Pemanggilan Database super cepat via Server Action (Tanpa API Route)
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
+    getProdukList()
+      .then((data) => {
+        setProducts(data as unknown as Product[]);
         setIsError(false);
-        const response = await fetch('/api/products'); 
-        if (!response.ok) throw new Error('API Error');
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        setProducts(data || []);
-      } catch (error) {
+        setIsLoading(false);
+      })
+      .catch((error) => {
         console.error("Gagal memuat dari database", error);
         setProducts([]); 
         setIsError(true);
-      } finally {
         setIsLoading(false);
-      }
-    };
-    fetchProducts();
+      });
   }, []);
 
   const groupedData = useMemo(() => {
@@ -87,9 +86,9 @@ export default function ProductsPage() {
     <div className="bg-gray-50 min-h-screen pb-20">
       
       {/* HEADER SECTION */}
-      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pt-35 md:pt-40 pb-12 md:pb-16 px-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('[https://www.transparenttextures.com/patterns/stardust.png](https://www.transparenttextures.com/patterns/stardust.png)')] opacity-10 pointer-events-none"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
+      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pt-32 md:pt-40 pb-12 md:pb-16 px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full blur-3xl opacity-20 pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto text-center relative z-10 animate-fade-in-up w-full">
           <h1 className="text-3xl md:text-5xl font-extrabold mb-3 md:mb-4">Katalog <span className="text-brand-gold">Produk</span></h1>
@@ -174,11 +173,10 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="bg-gray-900 rounded-none sm:rounded-[3rem] px-4 py-8 sm:p-10 lg:p-12 shadow-2xl relative overflow-hidden animate-fade-in-up">
-            <div className="absolute top-0 right-0 w-full h-full bg-[url('[https://www.transparenttextures.com/patterns/stardust.png](https://www.transparenttextures.com/patterns/stardust.png)')] opacity-[0.03] pointer-events-none"></div>
+            <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.03] pointer-events-none"></div>
             <div className="relative z-10">
               
               {activeCategory === "Semua" ? (
-                
                 mainCategories
                   .filter(cat => cat !== "Semua" && groupedData[cat]) 
                   .map((mainCatName, index, array) => {
@@ -200,9 +198,7 @@ export default function ProductsPage() {
                       </div>
                     );
                 })
-
               ) : (
-
                 groupedData[activeCategory] ? (
                   <div>
                     <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-8">
@@ -236,7 +232,7 @@ export default function ProductsPage() {
                 </p>
               </div>
               <div className="relative z-10 w-full md:w-auto shrink-0 mt-2 md:mt-0">
-                <Link href="/map" className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-brand-gold text-gray-900 px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-extrabold hover:bg-yellow-500 transition-colors shadow-[0_10px_20px_rgba(245,158,11,0.2)] hover:-translate-y-1 text-sm md:text-base">
+                <Link href="/#webgis-section" className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-brand-gold text-gray-900 px-6 md:px-8 py-3.5 md:py-4 rounded-xl font-extrabold hover:bg-yellow-500 transition-colors shadow-[0_10px_20px_rgba(245,158,11,0.2)] hover:-translate-y-1 text-sm md:text-base">
                   <i className="fa-solid fa-map-location-dot text-base md:text-lg"></i> Temukan Mitra
                 </Link>
               </div>

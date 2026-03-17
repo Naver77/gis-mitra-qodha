@@ -1,184 +1,216 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import { valuePropositions } from '@/lib/constants';
 
 export default function PartnershipPage() {
-  const waNumber = "6281717302223";
+  const packages = [
+    {
+      id: "reseller",
+      name: "Reseller",
+      icon: "fa-rocket",
+      desc: "Cocok untuk pemula yang ingin mulai berbisnis tanpa modal besar.",
+      discount: "Diskon up to 15%",
+      minOrder: "Minimal order Rp 500.000",
+      color: "from-blue-500 to-cyan-500",
+      bgLight: "bg-blue-50",
+      textDark: "text-blue-700",
+      features: [
+        "Akses ke seluruh katalog produk",
+        "Materi promosi dasar (Foto/Video)",
+        "Grup bimbingan WhatsApp",
+        "Tanpa target penjualan bulanan"
+      ]
+    },
+    {
+      id: "agen",
+      name: "Agen Resmi",
+      icon: "fa-store",
+      desc: "Untuk pebisnis yang sudah memiliki basis pelanggan atau toko offline.",
+      discount: "Diskon up to 25%",
+      minOrder: "Minimal order Rp 2.500.000",
+      color: "from-brand-gold to-yellow-500",
+      bgLight: "bg-yellow-50",
+      textDark: "text-yellow-700",
+      isPopular: true,
+      features: [
+        "Titik lokasi masuk ke WebGIS Pusat",
+        "Materi promosi lengkap & eksklusif",
+        "Bimbingan bisnis & marketing rutin",
+        "Prioritas pengiriman barang",
+        "Sertifikat Agen Resmi Qodha"
+      ]
+    },
+    {
+      id: "distributor",
+      name: "Distributor",
+      icon: "fa-crown",
+      desc: "Peluang memegang hak eksklusif penjualan untuk skala Kota/Kabupaten.",
+      discount: "Diskon up to 40%",
+      minOrder: "Hubungi Manajemen",
+      color: "from-purple-600 to-indigo-600",
+      bgLight: "bg-purple-50",
+      textDark: "text-purple-700",
+      features: [
+        "Hak wilayah eksklusif (1 Kota 1 Distributor)",
+        "Semua calon agen di kota Anda akan diarahkan ke Anda",
+        "Support marketing khusus (Ads/Endorse)",
+        "Spanduk dan X-Banner Gratis",
+        "Akses VIP ke Manajemen Pusat"
+      ]
+    }
+  ];
 
-  const handleJoinClick = (packageType: string) => {
-    const text = `Halo Tim Kemitraan Qodha!%0A%0ASaya tertarik untuk bergabung menjadi mitra sebagai *${packageType}*.%0A%0AMohon informasi lebih lanjut mengenai syarat, ketentuan, dan katalog harga mitra.%0A%0ATerima kasih!`;
-    window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
+  const handleWA = (paketName: string) => {
+    const text = `Halo Manajemen Qodha Aromatic, saya tertarik mendaftar untuk paket kemitraan *${paketName}*. Boleh minta informasi lebih lanjut?`;
+    window.open(`https://wa.me/6281717302223?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen font-sans">
       
-      {/* 1. HERO SECTION */}
-      <section className="relative w-full bg-gray-900 py-24 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-gold rounded-full filter blur-[120px] opacity-20"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-green rounded-full filter blur-[120px] opacity-20"></div>
+      {/* HERO SECTION */}
+      <section className="bg-gray-900 text-white pt-32 pb-20 px-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-600 rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <span className="text-brand-gold font-bold tracking-widest text-sm uppercase mb-4 block animate-fade-in-up">
-            Peluang Usaha Berkah
-          </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            Tumbuh Bersama <span className="text-brand-gold">Qodha Aromatic</span>
+        <div className="max-w-5xl mx-auto text-center relative z-10 animate-fade-in-up">
+          <span className="text-brand-gold font-bold tracking-widest text-xs uppercase mb-4 block">Peluang Usaha Menguntungkan</span>
+          <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
+            Sukses Bersama <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-brand-gold to-yellow-300">Qodha Aromatic</span>
           </h1>
-          <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Bergabunglah dengan ratusan mitra kami di seluruh Indonesia. Dapatkan margin profit tinggi, bimbingan marketing, dan produk wewangian Sunnah berkualitas premium yang mudah dijual.
+          <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-10">
+            Jadilah bagian dari jaringan bisnis produk wewangian Sunnah terbesar di Indonesia. Margin tinggi, produk mudah dijual, dan dukungan sistem pemetaan (WebGIS) modern.
           </p>
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <button 
-              onClick={() => handleJoinClick('Calon Mitra')}
-              className="bg-brand-gold text-gray-900 hover:bg-yellow-500 px-8 py-4 rounded-xl font-extrabold transition shadow-[0_10px_25px_rgba(245,158,11,0.3)] flex items-center gap-2 mx-auto hover:-translate-y-1"
-            >
-              <i className="fa-brands fa-whatsapp text-xl text-green-700"></i> Konsultasi Kemitraan
-            </button>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#paket-kemitraan" className="bg-brand-gold hover:bg-yellow-500 text-gray-900 px-8 py-4 rounded-xl font-bold transition shadow-lg shadow-brand-gold/30 flex items-center justify-center gap-2">
+              <i className="fa-solid fa-arrow-down"></i> Lihat Paket Kemitraan
+            </a>
+            <Link href="/" className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-8 py-4 rounded-xl font-bold transition flex items-center justify-center gap-2 backdrop-blur-md">
+              <i className="fa-solid fa-house"></i> Kembali ke Beranda
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* 2. KENAPA HARUS BERGABUNG */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* VALUE PROPOSITION (BENEFIT) */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Keuntungan Menjadi Mitra</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">Kami tidak hanya memberikan produk, tapi juga ekosistem bisnis yang mendukung Anda untuk terus berkembang.</p>
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Mengapa Harus Bergabung?</h2>
+            <p className="text-gray-500">Beragam keuntungan yang hanya Anda dapatkan di Qodha Aromatic.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { icon: 'fa-tags', title: 'Margin Besar', desc: 'Dapatkan harga khusus mitra dengan margin keuntungan ritel hingga 40% per produk.' },
-              { icon: 'fa-bullhorn', title: 'Support Marketing', desc: 'Akses gratis ke ratusan konten foto, video, dan copywriting siap *posting* setiap hari.' },
-              { icon: 'fa-medal', title: 'Produk Premium', desc: 'Kualitas produk terjamin, *repeat order* tinggi, dan sudah mengantongi izin resmi.' },
-              { icon: 'fa-users', title: 'Komunitas Positif', desc: 'Tergabung dalam grup eksklusif mitra untuk sharing ilmu jualan dan silaturahmi.' },
-            ].map((benefit, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-3xl p-8 border border-gray-100 hover:shadow-xl hover:border-brand-gold transition-all duration-300 group">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform">
-                  <i className={`fa-solid ${benefit.icon} text-2xl text-brand-gold`}></i>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {valuePropositions.map((vp, idx) => (
+              <div key={idx} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mb-5">
+                  <i className={`fa-solid ${vp.icon}`}></i>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand-gold transition-colors">{benefit.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{benefit.desc}</p>
+                <h3 className="font-bold text-gray-900 mb-2">{vp.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{vp.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 3. PAKET KEMITRAAN */}
-      <section className="py-20 bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* PRICING / PAKET KEMITRAAN */}
+      <section id="paket-kemitraan" className="py-20 px-4 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-brand-gold font-bold tracking-widest text-sm uppercase mb-2 block">Pilih Paket Anda</span>
-            <h2 className="text-3xl font-extrabold text-gray-900">Level Kemitraan Qodha</h2>
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Pilih Jalur Kesuksesan Anda</h2>
+            <p className="text-gray-500">Tersedia berbagai pilihan paket yang bisa disesuaikan dengan modal dan target pasar Anda.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            {/* Reseller */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col relative overflow-hidden">
-              <div className="mb-6 text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Reseller</h3>
-                <p className="text-gray-500 text-sm">Cocok untuk pemula yang baru mulai usaha.</p>
-              </div>
-              <div className="text-center mb-8 pb-8 border-b border-gray-100">
-                <span className="text-4xl font-black text-brand-green">± Rp 1 Jt</span>
-                <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Pembelian Awal (1 Karton)</p>
-              </div>
-              <ul className="space-y-4 mb-8 flex-1 text-sm text-gray-600 font-medium">
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Bebas Mix Aroma</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Harga Reseller Resmi</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Masuk Grup Bimbingan</li>
-                <li className="flex gap-3 items-start text-gray-400"><i className="fa-regular fa-circle text-gray-300 mt-1"></i>Repeat Order Min. Lusinan</li>
-              </ul>
-              <button onClick={() => handleJoinClick('Reseller')} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-4 rounded-xl transition">
-                Pilih Reseller
-              </button>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            {packages.map((pkg) => (
+              <div key={pkg.id} className={`relative bg-white rounded-4xl border transition-all duration-300 flex flex-col h-full ${pkg.isPopular ? 'border-brand-gold shadow-2xl scale-100 lg:scale-105 z-10' : 'border-gray-200 shadow-md hover:shadow-xl hover:border-gray-300'}`}>
+                
+                {pkg.isPopular && (
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-brand-gold text-gray-900 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-md">
+                    Paling Diminati
+                  </div>
+                )}
 
-            {/* Agen (Rekomendasi) */}
-            <div className="bg-gray-900 rounded-[2.5rem] p-8 shadow-2xl border border-gray-800 hover:-translate-y-2 transition-all duration-300 flex flex-col relative overflow-hidden transform md:scale-105 z-10">
-              <div className="absolute top-6 right-6 bg-brand-gold text-gray-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                Rekomendasi
-              </div>
-              <div className="mb-6 text-center mt-4">
-                <h3 className="text-2xl font-bold text-white mb-2">Agen</h3>
-                <p className="text-gray-400 text-sm">Pilihan tepat untuk mendominasi kota Anda.</p>
-              </div>
-              <div className="text-center mb-8 pb-8 border-b border-gray-800">
-                <span className="text-4xl font-black text-brand-gold">± Rp 3 Jt</span>
-                <p className="text-xs text-gray-500 mt-2 font-bold uppercase tracking-wider">Pembelian Awal (3 Karton)</p>
-              </div>
-              <ul className="space-y-4 mb-8 flex-1 text-sm text-gray-300 font-medium">
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Bebas Mix Aroma</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Harga Agen Khusus</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Free Akrilik Display (Khusus Parfum)</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Didaftarkan di Web Peta Mitra</li>
-              </ul>
-              <button onClick={() => handleJoinClick('Agen')} className="w-full bg-brand-gold hover:bg-yellow-500 text-gray-900 font-extrabold py-4 rounded-xl transition shadow-[0_5px_15px_rgba(245,158,11,0.3)]">
-                Pilih Agen
-              </button>
-            </div>
+                <div className={`p-8 rounded-t-4xl border-b border-gray-100 ${pkg.bgLight}`}>
+                  <div className={`w-14 h-14 bg-linear-to-br ${pkg.color} text-white rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-lg`}>
+                    <i className={`fa-solid ${pkg.icon}`}></i>
+                  </div>
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">{pkg.name}</h3>
+                  <p className="text-sm text-gray-600 mb-6 h-10">{pkg.desc}</p>
+                  
+                  <div className="bg-white p-4 rounded-xl border border-white shadow-sm text-center">
+                    <p className={`text-xl font-black ${pkg.textDark}`}>{pkg.discount}</p>
+                    <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">{pkg.minOrder}</p>
+                  </div>
+                </div>
 
-            {/* Distributor */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col relative overflow-hidden">
-              <div className="mb-6 text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Distributor</h3>
-                <p className="text-gray-500 text-sm">Untuk skala besar dan suplai ke agen-agen.</p>
-              </div>
-              <div className="text-center mb-8 pb-8 border-b border-gray-100">
-                <span className="text-4xl font-black text-brand-green">± Rp 6 Jt</span>
-                <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Pembelian Awal (6 Karton)</p>
-              </div>
-              <ul className="space-y-4 mb-8 flex-1 text-sm text-gray-600 font-medium">
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Bebas Mix Aroma</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Harga Termurah / Tangan Pertama</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Spanduk Resmi Kemitraan</li>
-                <li className="flex gap-3 items-start"><i className="fa-solid fa-circle-check text-brand-gold mt-1"></i>Prioritas Area (Terbatas)</li>
-              </ul>
-              <button onClick={() => handleJoinClick('Distributor')} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-4 rounded-xl transition">
-                Pilih Distributor
-              </button>
-            </div>
+                <div className="p-8 flex-1 flex flex-col">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Fasilitas yang didapat:</p>
+                  <ul className="space-y-4 mb-8 flex-1">
+                    {pkg.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <i className="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                        <span className="text-sm text-gray-700 font-medium">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
+                  <button 
+                    onClick={() => handleWA(pkg.name)}
+                    className={`w-full py-4 rounded-xl font-black transition-all duration-300 flex items-center justify-center gap-2 ${
+                      pkg.isPopular 
+                        ? 'bg-brand-gold hover:bg-yellow-500 text-gray-900 shadow-[0_10px_20px_rgba(245,158,11,0.2)]' 
+                        : 'bg-gray-900 hover:bg-gray-800 text-white shadow-md'
+                    }`}
+                  >
+                    <i className="fa-brands fa-whatsapp text-lg"></i> Daftar Sekarang
+                  </button>
+                </div>
+
+              </div>
+            ))}
           </div>
-          
-          <p className="text-center text-xs text-gray-400 mt-10 font-medium">
-            *Semua mitra wajib melakukan *repeat order* minimal 1x setiap bulan agar status kemitraan tetap aktif.
-          </p>
         </div>
       </section>
 
-      {/* 4. CARA BERGABUNG */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-12">Cara Mudah Bergabung</h2>
+      {/* WEBGIS INFO SECTION */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto bg-gray-900 rounded-[3rem] p-8 md:p-16 relative overflow-hidden shadow-2xl flex flex-col md:flex-row items-center gap-12">
+          <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.03] pointer-events-none"></div>
           
-          <div className="flex flex-col md:flex-row justify-center items-center gap-6 relative">
-            {/* Garis konektor (hanya tampil di desktop) */}
-            <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-100 -z-10 -translate-y-1/2"></div>
-            
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm w-full md:w-1/3 relative">
-              <div className="w-10 h-10 bg-brand-gold text-white font-black rounded-full flex items-center justify-center absolute -top-5 left-1/2 transform -translate-x-1/2 border-4 border-white">1</div>
-              <i className="fa-solid fa-mobile-screen text-3xl text-gray-400 mb-4 mt-2"></i>
-              <h4 className="font-bold text-gray-900 mb-2">Hubungi CS</h4>
-              <p className="text-xs text-gray-500">Klik tombol WhatsApp dan pilih paket yang Anda inginkan.</p>
+          <div className="w-full md:w-1/2 relative z-10 text-center md:text-left">
+            <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center text-3xl mx-auto md:mx-0 mb-6">
+              <i className="fa-solid fa-map-location-dot"></i>
             </div>
-            
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm w-full md:w-1/3 relative">
-              <div className="w-10 h-10 bg-brand-gold text-white font-black rounded-full flex items-center justify-center absolute -top-5 left-1/2 transform -translate-x-1/2 border-4 border-white">2</div>
-              <i className="fa-solid fa-list-check text-3xl text-gray-400 mb-4 mt-2"></i>
-              <h4 className="font-bold text-gray-900 mb-2">Pilih Aroma</h4>
-              <p className="text-xs text-gray-500">Pilih varian aroma bebas sesuai selera pasar di kota Anda.</p>
-            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Integrasi WebGIS Canggih</h2>
+            <p className="text-gray-400 leading-relaxed mb-6">
+              Bagi mitra level <span className="text-brand-gold font-bold">Agen</span> dan <span className="text-brand-gold font-bold">Distributor</span>, lokasi toko Anda akan dipetakan secara digital di website pusat kami. 
+              Ini memudahkan calon pembeli di sekitar wilayah Anda untuk menemukan dan membeli langsung dari toko Anda tanpa ongkos kirim yang mahal.
+            </p>
+            <Link href="/#webgis-section" className="text-brand-gold font-bold hover:underline flex items-center justify-center md:justify-start gap-2">
+              Lihat Demo Peta <i className="fa-solid fa-arrow-right"></i>
+            </Link>
+          </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm w-full md:w-1/3 relative">
-              <div className="w-10 h-10 bg-brand-gold text-white font-black rounded-full flex items-center justify-center absolute -top-5 left-1/2 transform -translate-x-1/2 border-4 border-white">3</div>
-              <i className="fa-solid fa-truck-fast text-3xl text-gray-400 mb-4 mt-2"></i>
-              <h4 className="font-bold text-gray-900 mb-2">Barang Dikirim</h4>
-              <p className="text-xs text-gray-500">Lakukan pembayaran dan pesanan segera meluncur ke lokasi Anda.</p>
+          <div className="w-full md:w-1/2 relative z-10 flex justify-center">
+            {/* Ilustrasi Peta Abstrak */}
+            <div className="relative w-72 h-72 sm:w-80 sm:h-80 bg-gray-800 border-4 border-gray-700 rounded-full shadow-2xl overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] opacity-20 bg-cover bg-center"></div>
+              
+              {/* Pin Animasi */}
+              <div className="absolute top-1/3 left-1/3 animate-bounce">
+                <i className="fa-solid fa-location-dot text-4xl text-brand-gold filter drop-shadow-lg"></i>
+              </div>
+              <div className="absolute bottom-1/3 right-1/3 animate-bounce" style={{ animationDelay: '0.5s' }}>
+                <i className="fa-solid fa-location-dot text-3xl text-emerald-500 filter drop-shadow-lg"></i>
+              </div>
+              <div className="absolute top-1/2 right-1/4 animate-bounce" style={{ animationDelay: '1s' }}>
+                <i className="fa-solid fa-location-dot text-2xl text-blue-500 filter drop-shadow-lg"></i>
+              </div>
             </div>
           </div>
         </div>

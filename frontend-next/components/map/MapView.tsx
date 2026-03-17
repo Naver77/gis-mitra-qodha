@@ -95,7 +95,7 @@ export default function MapView({
       </MapContainer>
 
       {/* Floating Copyright */}
-      <div className="absolute bottom-4 right-4 z-[999] bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm text-[10px] font-bold text-gray-500 border border-white pointer-events-none">
+      <div className="absolute bottom-4 right-4 z-999 bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm text-[10px] font-bold text-gray-500 border border-white pointer-events-none">
         &copy; {new Date().getFullYear()} Qodha Aromatic GIS
       </div>
     </div>
