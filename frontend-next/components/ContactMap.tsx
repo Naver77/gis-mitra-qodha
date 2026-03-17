@@ -28,7 +28,7 @@ export default function ContactMap() {
       />
       <Marker position={[lat, lng]} icon={qodhaIcon}>
         <Popup>
-          <div className="text-center p-2 font-sans min-w-[150px]">
+          <div className="text-center p-2 font-sans min-w-37.5">
             <h3 className="font-extrabold text-sm mb-1 text-gray-900">Gallery Qodha Pusat</h3>
             <p className="text-xs text-gray-500 mb-2">Jl. Empang No. 29B, Bogor</p>
             <a href={`https://maps.google.com/?q=${lat},${lng}`} target="_blank" rel="noreferrer" className="block text-xs bg-brand-green text-white py-1.5 px-3 rounded-lg hover:bg-green-700 transition font-bold shadow-sm">

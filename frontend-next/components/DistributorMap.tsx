@@ -146,7 +146,7 @@ export default function DistributorMap() {
     <div className="flex flex-col md:flex-row w-full bg-gray-100 relative" style={{ height: 'calc(100vh - 85px)' }}>
       
       {/* SIDEBAR */}
-      <aside className={`w-full md:w-[400px] h-full bg-white shadow-xl z-20 flex flex-col absolute md:relative transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`w-full md:w-100 h-full bg-white shadow-xl z-20 flex flex-col absolute md:relative transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-5 border-b border-gray-100 shrink-0">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl font-bold text-gray-900">📍 Lokasi Mitra</h1>
@@ -226,7 +226,7 @@ export default function DistributorMap() {
       <main className="flex-1 w-full h-full relative z-10">
         <button 
           onClick={() => setIsSidebarOpen(true)} 
-          className="md:hidden absolute top-4 left-4 z-[9999] bg-white w-12 h-12 flex items-center justify-center rounded-xl shadow-lg border border-gray-200 text-gray-800 hover:text-brand-gold transition"
+          className="md:hidden absolute top-4 left-4 z-9999 bg-white w-12 h-12 flex items-center justify-center rounded-xl shadow-lg border border-gray-200 text-gray-800 hover:text-brand-gold transition"
         >
           <i className="fa-solid fa-bars text-xl"></i>
         </button>
@@ -262,7 +262,7 @@ export default function DistributorMap() {
               icon={qodhaIcon}
             >
               <Popup>
-                <div className="min-w-[180px]">
+                <div className="min-w-45">
                   <h3 className="font-extrabold text-gray-900 text-sm mb-1">{item.properties.nama}</h3>
                   <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded uppercase ${item.properties.jenis === 'Agen' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{item.properties.jenis}</span>
                   <p className="text-xs text-gray-500 mt-2">{item.properties.alamat}</p>
