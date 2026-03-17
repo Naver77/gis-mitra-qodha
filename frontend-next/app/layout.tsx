@@ -11,7 +11,6 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
-  // Kita hilangkan 'variable' dan akan menggunakan 'className' langsung di bawah
 });
 
 export default function RootLayout({
@@ -34,15 +33,14 @@ export default function RootLayout({
         <meta name="description" content="Pusat Kemitraan dan Produk Wewangian Qodha Aromatic" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
-      {/* PERUBAHAN KUNCI DI SINI: 
-        Menggunakan plusJakartaSans.className secara langsung. 
-        Ini akan MEMAKSA browser menggunakan font tersebut di seluruh website.
-      */}
+      
       <body className={`${plusJakartaSans.className} flex flex-col min-h-screen bg-gray-50 text-gray-800 antialiased selection:bg-brand-orange selection:text-white`}>
         
         <Header />
         
-        <main className="grow w-full relative flex flex-col pt-21.25">
+        {/* PERBAIKAN EXPERT: 'pt-21.25' DIHAPUS. 
+            Sekarang setiap halaman bebas mengatur batas atasnya sendiri (Edge-to-Edge) */}
+        <main className="grow w-full relative flex flex-col">
           {children}
         </main>
 

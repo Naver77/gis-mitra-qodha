@@ -14,7 +14,6 @@ interface Product {
   gambar?: string | null;
   rating?: number;
   terjual?: number;
-  // Fallback UI (Jika kolom belum ada di DB)
   stok?: number;
   deskripsi?: string;
   aroma?: string;
@@ -39,7 +38,6 @@ export default function ProductDetail() {
       try {
         setIsLoading(true);
         
-        // Cek parameter URL
         if (!params || !params.id) {
           if (isMounted) setIsLoading(false);
           return;
@@ -47,7 +45,6 @@ export default function ProductDetail() {
 
         const productId = String(Array.isArray(params.id) ? params.id[0] : params.id);
 
-        // Tarik data dari API MySQL
         const response = await fetch('/api/products');
         if (!response.ok) throw new Error('Gagal mengambil data API');
         
@@ -56,13 +53,12 @@ export default function ProductDetail() {
 
         if (!isMounted) return;
 
-        // Cari produk berdasarkan ID
         const foundProduct = data.find((p: Product) => String(p.id_produk) === productId);
 
         if (foundProduct) {
           setProduct(foundProduct);
         } else {
-          setProduct(null); // Produk tidak ditemukan
+          setProduct(null); 
         }
       } catch (error) {
         console.error("Gagal memuat detail produk:", error);
@@ -75,7 +71,7 @@ export default function ProductDetail() {
     fetchProductData();
 
     return () => {
-      isMounted = false; // Cleanup untuk mencegah memory leak
+      isMounted = false; 
     };
   }, [params]);
 
@@ -89,10 +85,10 @@ export default function ProductDetail() {
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
   };
 
-  // --- RENDER LOADING ---
+  // --- RENDER LOADING (Ditambah pt-[85px] agar tidak tertutup Header) ---
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25">
         <div className="flex flex-col items-center animate-fade-in-up">
           <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-gold rounded-full animate-spin mb-4 shadow-lg"></div>
           <p className="text-gray-500 font-extrabold tracking-widest uppercase text-xs animate-pulse">Menyiapkan Produk...</p>
@@ -101,11 +97,11 @@ export default function ProductDetail() {
     );
   }
 
-  // --- RENDER 404 (TIDAK DITEMUKAN) ---
+  // --- RENDER 404 (Ditambah pt-[85px] agar tidak tertutup Header) ---
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20 px-4">
-        <div className="text-center bg-white p-8 md:p-12 rounded-[2rem] shadow-2xl border border-gray-100 max-w-md w-full animate-fade-in-up">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25 px-4">
+        <div className="text-center bg-white p-8 md:p-12 rounded-4xl shadow-2xl border border-gray-100 max-w-md w-full animate-fade-in-up">
           <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <i className="fa-solid fa-box-open text-4xl text-gray-400"></i>
           </div>
@@ -119,7 +115,7 @@ export default function ProductDetail() {
     );
   }
 
-  // --- FALLBACK DATA (Jika Kolom Tidak Ada di DB) ---
+  // --- FALLBACK DATA ---
   const isPremium = product.nama_kategori.toLowerCase().includes('premium');
   const stokTersedia = product.stok !== undefined ? product.stok : 99;
   const ratingProduk = product.rating || "5.0";
@@ -129,10 +125,14 @@ export default function ProductDetail() {
 
   // --- RENDER HALAMAN UTAMA ---
   return (
+    // Tidak ada lagi margin minus (-mt) di sini, sangat bersih!
     <div className="bg-gray-50 min-h-screen pb-24">
       
-      {/* 1. BREADCRUMB (Kompensasi Navbar Global pt-[85px]) */}
-      <div className="bg-white border-b border-gray-100 pt-[85px] md:pt-[95px] sticky top-0 z-30 shadow-sm">
+      {/* 1. BREADCRUMB 
+          PERBAIKAN: pt-[85px] md:pt-[100px] digunakan untuk mendorong Breadcrumb
+          agar posisinya pas berada di bawah Header/Navbar yang melayang.
+      */}
+      <div className="bg-white border-b border-gray-100 pt-21.25 md:pt-25 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <nav className="flex items-center text-xs md:text-sm text-gray-500 font-bold whitespace-nowrap overflow-x-auto hide-scrollbar">
             <Link href="/" className="hover:text-brand-gold transition-colors flex items-center gap-2"><i className="fa-solid fa-house"></i> Beranda</Link>
@@ -141,19 +141,19 @@ export default function ProductDetail() {
             <span className="mx-3 text-gray-300">/</span>
             <span className="text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-md">{product.nama_kategori}</span>
             <span className="mx-3 text-gray-300">/</span>
-            <span className="text-gray-900 truncate max-w-[150px] md:max-w-xs">{product.nama_produk}</span>
+            <span className="text-gray-900 truncate max-w-37.5 md:max-w-xs">{product.nama_produk}</span>
           </nav>
         </div>
       </div>
 
       {/* 2. PRODUK UTAMA */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-10">
-        <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden relative">
+        <div className="bg-white rounded-4xl md:rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden relative">
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative">
             
             {/* Kiri: Gambar Produk (Sticky di Desktop) */}
-            <div className="relative p-6 md:p-12 lg:p-16 bg-gray-50 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 lg:sticky lg:top-[120px] lg:h-[calc(100vh-120px)]">
+            <div className="relative p-6 md:p-12 lg:p-16 bg-gray-50 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 lg:sticky lg:top-40 lg:h-[calc(100vh-160px)]">
               
               {isPremium && (
                 <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10 bg-gray-900 text-brand-gold border border-brand-gold/30 text-[10px] md:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-xl animate-fade-in-up flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <div className="relative w-full max-w-sm md:max-w-md aspect-square rounded-2xl md:rounded-[2rem] overflow-hidden shadow-2xl group border border-gray-200/50 bg-white">
+              <div className="relative w-full max-w-sm md:max-w-md aspect-square rounded-2xl md:rounded-4xl overflow-hidden shadow-2xl group border border-gray-200/50 bg-white">
                 {product.gambar ? (
                   <img 
                     src={product.gambar} 
@@ -259,7 +259,7 @@ export default function ProductDetail() {
 
       {/* 3. TABS INFORMASI TAMBAHAN */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-10">
-        <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden p-6 md:p-12">
+        <div className="bg-white rounded-4xl md:rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden p-6 md:p-12">
           
           <div className="flex border-b border-gray-100 mb-8 overflow-x-auto hide-scrollbar snap-x">
             <button onClick={() => setActiveTab('deskripsi')} className={`pb-4 px-6 font-bold text-sm whitespace-nowrap transition-colors relative snap-start ${activeTab === 'deskripsi' ? 'text-brand-gold' : 'text-gray-400 hover:text-gray-900'}`}>

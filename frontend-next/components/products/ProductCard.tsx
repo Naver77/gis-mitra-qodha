@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/types/product';
@@ -26,7 +27,9 @@ export const ProductCard = ({ product, mainCat }: ProductCardProps) => {
 
   return (
     <div className={`rounded-2xl md:rounded-3xl overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-1 md:hover:-translate-y-1.5 transition-all duration-300 group flex flex-col h-full ${isPremium ? 'bg-gray-900 border-brand-gold/30' : 'bg-white border-gray-100'}`}>
-      <div className={`relative aspect-square overflow-hidden flex items-center justify-center ${isPremium ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      
+      {/* 1. BAGIAN GAMBAR - Kini Dibungkus dengan Link agar bisa diklik di Mobile */}
+      <Link href={`/products/${product.id_produk}`} className={`relative aspect-square block overflow-hidden ${isPremium ? 'bg-gray-800' : 'bg-gray-50'}`}>
         
         {badgeText && (
           <div className={`absolute top-2 left-2 md:top-4 md:left-4 z-10 text-[8px] md:text-[9px] font-extrabold px-2 py-1 md:px-3 md:py-1.5 rounded-full uppercase tracking-wider shadow-md ${badgeClass}`}>
@@ -46,12 +49,13 @@ export const ProductCard = ({ product, mainCat }: ProductCardProps) => {
           </div>
         )}
 
+        {/* Overlay Desktop - Ubah tag <Link> menjadi <div> agar tidak ada error Nested Link di HTML */}
         <div className="hidden md:flex absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-center justify-center rounded-t-3xl">
-          <Link href={`/products/${product.id_produk}`} className="bg-white text-gray-900 font-extrabold text-sm px-6 py-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl hover:bg-brand-gold hover:text-white flex items-center gap-2">
+          <div className="bg-white text-gray-900 font-extrabold text-sm px-6 py-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl group-hover:bg-brand-gold group-hover:text-white flex items-center gap-2">
             Lihat Detail <i className="fa-solid fa-arrow-right"></i>
-          </Link>
+          </div>
         </div>
-      </div>
+      </Link>
 
       <div className="p-3 md:p-5 flex flex-col grow">
         <div className="flex justify-between items-start mb-1.5 md:mb-2">
@@ -63,15 +67,19 @@ export const ProductCard = ({ product, mainCat }: ProductCardProps) => {
           </div>
         </div>
         
-        <h3 className={`font-extrabold mb-1.5 md:mb-2 leading-snug transition-colors line-clamp-2 text-xs md:text-base ${isPremium ? 'text-white group-hover:text-brand-gold' : 'text-gray-900 group-hover:text-brand-gold'}`}>
-          {product.nama_produk}
-        </h3>
+        {/* 2. JUDUL PRODUK - Kini juga dibungkus Link agar nama produk bisa diklik */}
+        <Link href={`/products/${product.id_produk}`}>
+          <h3 className={`font-extrabold mb-1.5 md:mb-2 leading-snug transition-colors line-clamp-2 text-xs md:text-base ${isPremium ? 'text-white hover:text-brand-gold' : 'text-gray-900 hover:text-brand-gold'}`}>
+            {product.nama_produk}
+          </h3>
+        </Link>
         
         <div className={`flex flex-col xl:flex-row xl:items-end justify-between mt-auto pt-2 md:pt-4 border-t gap-1 md:gap-2 ${isPremium ? 'border-gray-800' : 'border-gray-50'}`}>
           <span className={`text-sm md:text-lg font-black leading-none ${isPremium ? 'text-brand-gold' : 'text-brand-green'}`}>{formatRupiah(product.harga)}</span>
           <span className={`text-[9px] md:text-xs font-medium ${isPremium ? 'text-gray-400' : 'text-gray-400'}`}>{product.terjual || 0} Terjual</span>
         </div>
         
+        {/* Tombol Beli khusus Mobile */}
         <Link href={`/products/${product.id_produk}`} className={`md:hidden w-full mt-3 text-center py-2 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-colors shadow-sm ${isPremium ? 'bg-brand-gold text-gray-900 active:bg-yellow-500' : 'bg-gray-900 text-white active:bg-brand-gold active:text-gray-900'}`}>
           Beli
         </Link>
