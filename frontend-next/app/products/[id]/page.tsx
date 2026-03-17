@@ -85,7 +85,7 @@ export default function ProductDetail() {
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
   };
 
-  // --- RENDER LOADING (Ditambah pt-[85px] agar tidak tertutup Header) ---
+  // --- RENDER LOADING ---
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25">
@@ -97,7 +97,7 @@ export default function ProductDetail() {
     );
   }
 
-  // --- RENDER 404 (Ditambah pt-[85px] agar tidak tertutup Header) ---
+  // --- RENDER 404 ---
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25 px-4">
@@ -125,14 +125,20 @@ export default function ProductDetail() {
 
   // --- RENDER HALAMAN UTAMA ---
   return (
-    // Tidak ada lagi margin minus (-mt) di sini, sangat bersih!
     <div className="bg-gray-50 min-h-screen pb-24">
       
-      {/* 1. BREADCRUMB 
-          PERBAIKAN: pt-[85px] md:pt-[100px] digunakan untuk mendorong Breadcrumb
-          agar posisinya pas berada di bawah Header/Navbar yang melayang.
+      {/* 1. SPACER HEADER (PENTING!)
+          Memastikan layout tidak tertutup Header saat pertama kali dimuat,
+          namun akan ikut ter-scroll ke atas sehingga Breadcrumb bisa mentok sempurna.
       */}
-      <div className="bg-white border-b border-gray-100 pt-21.25 md:pt-25 sticky top-0 z-30 shadow-sm">
+      <div className="h-20 md:h-22.5 w-full bg-transparent pointer-events-none"></div>
+
+      {/* 2. BREADCRUMB
+          PERBAIKAN: pt-[85px] dihapus sepenuhnya!
+          Kini murni menggunakan py-3.5, sehingga saat mentok ke top-0, 
+          tidak ada ruang putih kosong yang menyebalkan.
+      */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm transition-shadow duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <nav className="flex items-center text-xs md:text-sm text-gray-500 font-bold whitespace-nowrap overflow-x-auto hide-scrollbar">
             <Link href="/" className="hover:text-brand-gold transition-colors flex items-center gap-2"><i className="fa-solid fa-house"></i> Beranda</Link>
@@ -146,14 +152,14 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* 2. PRODUK UTAMA */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-10">
+      {/* 3. PRODUK UTAMA */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-8">
         <div className="bg-white rounded-4xl md:rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden relative">
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative">
             
-            {/* Kiri: Gambar Produk (Sticky di Desktop) */}
-            <div className="relative p-6 md:p-12 lg:p-16 bg-gray-50 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 lg:sticky lg:top-40 lg:h-[calc(100vh-160px)]">
+            {/* Kiri: Gambar Produk (Sticky diubah ke top-[80px] agar pas di bawah breadcrumb) */}
+            <div className="relative p-6 md:p-12 lg:p-16 bg-gray-50 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 lg:sticky lg:top-20 lg:h-[calc(100vh-100px)]">
               
               {isPremium && (
                 <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10 bg-gray-900 text-brand-gold border border-brand-gold/30 text-[10px] md:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-xl animate-fade-in-up flex items-center gap-2">
@@ -257,7 +263,7 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* 3. TABS INFORMASI TAMBAHAN */}
+      {/* 4. TABS INFORMASI TAMBAHAN */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-10">
         <div className="bg-white rounded-4xl md:rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden p-6 md:p-12">
           
