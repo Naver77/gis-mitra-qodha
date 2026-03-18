@@ -1,11 +1,9 @@
 "use client";
 import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { loginAdmin } from '@/lib/auth'; // FIX: Mengarah ke file lib/auth.ts Anda
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [errorMsg, setErrorMsg] = useState('');
   const [isPending, startTransition] = useTransition();
 
@@ -22,8 +20,9 @@ export default function LoginPage() {
       if (result?.error) {
         setErrorMsg(result.error);
       } else if (result?.success) {
-        // Jika sukses, arahkan ke Dashboard Admin
-        router.push('/admin');
+        // MENGHANCURKAN CACHE: Paksa browser memuat ulang halaman dari awal (Hard Reload)
+        // Agar browser lupa kalau sebelumnya halaman menu-menu admin pernah dikunci
+        window.location.href = '/admin';
       }
     });
   };
