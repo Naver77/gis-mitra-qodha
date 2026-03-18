@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
-// 1. IMPORT HOOK PENDETEKSI URL
+import LayoutWrapper from '@/components/LayoutWrapper';
 import { usePathname } from "next/navigation"; 
 import "./globals.css";
 import Header from "@/components/Header";
@@ -23,10 +23,10 @@ export default function RootLayout({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContext, setModalContext] = useState('');
   
-  // 2. PANTAU URL SAAT INI
+  // PANTAU URL SAAT INI
   const pathname = usePathname(); 
   
-  // 3. BUAT VARIABEL LOGIKA: Bernilai 'true' HANYA jika sedang di halaman peta
+  // BUAT VARIABEL LOGIKA: Bernilai 'true' HANYA jika sedang di halaman peta
   const isMapPage = pathname === '/map';
 
   const triggerLeadModal = (context: string) => {
@@ -42,25 +42,32 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
       
-      {/* PERBAIKAN: Jika sedang di halaman peta, paksa body agar tidak bisa di-scroll (overflow-hidden) */}
+      {/* Jika sedang di halaman peta, paksa body agar tidak bisa di-scroll (overflow-hidden) */}
       <body className={`${plusJakartaSans.className} flex flex-col min-h-screen bg-gray-50 text-gray-800 antialiased selection:bg-brand-orange selection:text-white ${isMapPage ? 'overflow-hidden' : ''}`}>
         
-        <Header />
-        
-        <main className="grow w-full relative flex flex-col">
-          {children}
-        </main>
+        {/* BUNGKUS DENGAN LAYOUT WRAPPER PINTAR */}
+        <LayoutWrapper 
+          header={<Header />} 
+          footer={
+            /* Logika: Footer HANYA muncul jika BUKAN di halaman peta */
+            !isMapPage ? (
+              <Footer onFloatingWaClick={() => triggerLeadModal("Pertanyaan Umum (Dari Tombol Melayang Bawah)")} />
+            ) : null
+          }
+        >
+          {/* KONTEN UTAMA (Children) */}
+          <main className="grow w-full relative flex flex-col">
+            {children}
+          </main>
+        </LayoutWrapper>
 
-        {/* 4. LOGIKA KONDISIONAL: Footer BESAR HANYA muncul jika BUKAN di halaman peta */}
-        {!isMapPage && (
-          <Footer onFloatingWaClick={() => triggerLeadModal("Pertanyaan Umum (Dari Tombol Melayang Bawah)")} />
-        )}
-
+        {/* Modal WA ditaruh di luar agar tidak terpengaruh z-index */}
         <LeadModal 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           sourceContext={modalContext} 
         />
+
       </body>
     </html>
   );
