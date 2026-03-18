@@ -7,7 +7,7 @@ import Link from 'next/link';
 // Mengimpor font Inter khusus untuk data dan paragraf
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
-// FIX 1: Membuat "KTP" resmi untuk TypeScript agar terbebas dari tipe 'any'
+// Membuat "KTP" resmi untuk TypeScript agar terbebas dari tipe 'any'
 interface ProdukPopuler {
   nama_produk: string;
   klik: number;
@@ -35,16 +35,16 @@ export default async function AdminDashboard() {
   try {
     // Menghitung Total Produk
     const [prodRes] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as total FROM tb_produk');
-    totalProduk = prodRes[0].total;
+    totalProduk = Number(prodRes[0]?.total || 0);
 
     // Menghitung Total Mitra
     const [mitraRes] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as total FROM tb_mitra');
-    totalMitra = mitraRes[0].total;
+    totalMitra = Number(mitraRes[0]?.total || 0);
 
     // AUTO-ADAPT: Mengambil total klik
     try {
       const [klikProdRes] = await pool.query<RowDataPacket[]>('SELECT SUM(klik) as total FROM tb_produk');
-      totalKlikProduk = klikProdRes[0].total || 1240; 
+      totalKlikProduk = Number(klikProdRes[0]?.total || 1240); 
       
       const [topProdRes] = await pool.query<RowDataPacket[]>('SELECT nama_produk, klik, harga, foto_produk FROM tb_produk ORDER BY klik DESC LIMIT 4');
       produkTerpopuler = topProdRes as ProdukPopuler[];
@@ -54,7 +54,7 @@ export default async function AdminDashboard() {
       totalKlikMitra = 856;
       produkTerpopuler = [
         { nama_produk: 'Parfum Kasturi Kijang', klik: 1240, harga: 150000, foto_produk: '' },
-        { nama_produk: 'Misk Thaharah', klik: 890, harga: 75000, foto_foto: '' } as unknown as ProdukPopuler,
+        { nama_produk: 'Misk Thaharah', klik: 890, harga: 75000, foto_produk: '' },
         { nama_produk: 'Oud Al Layl', klik: 650, harga: 210000, foto_produk: '' },
         { nama_produk: 'Raudhah Blend', klik: 420, harga: 185000, foto_produk: '' },
       ];
@@ -74,7 +74,6 @@ export default async function AdminDashboard() {
           </p>
           <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
             {greeting}, 
-            {/* FIX 2: bg-gradient-to-r diubah menjadi bg-linear-to-r (Standar Tailwind v4) */}
             <span className="text-transparent bg-clip-text bg-linear-to-r from-gray-900 to-gray-500 ml-2">Admin Qodha!</span>
           </h1>
         </div>
@@ -111,7 +110,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Card 3 - FIX 3: bg-gradient-to-br diubah jadi bg-linear-to-br */}
+        {/* Card 3 */}
         <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-3xl p-6 border border-gray-800 shadow-xl relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
           <div className="relative z-10">
@@ -119,11 +118,11 @@ export default async function AdminDashboard() {
               <i className="fa-solid fa-hand-pointer"></i>
             </div>
             <p className={`${inter.className} text-gray-400 font-medium text-sm mb-1`}>Total Klik & Dilihat</p>
-            <h2 className="text-3xl font-black text-white">{totalKlikProduk.toLocaleString('id-ID')} <span className="text-sm text-brand-gold font-bold tracking-widest uppercase">+Views</span></h2>
+            <h2 className="text-3xl font-black text-white">{(totalKlikProduk || 0).toLocaleString('id-ID')} <span className="text-sm text-brand-gold font-bold tracking-widest uppercase">+Views</span></h2>
           </div>
         </div>
 
-        {/* Card 4 - FIX 4: bg-gradient-to-br diubah jadi bg-linear-to-br */}
+        {/* Card 4 */}
         <div className="bg-linear-to-br from-brand-gold to-amber-500 rounded-3xl p-6 border border-amber-400 shadow-xl shadow-amber-500/20 relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
           <div className="relative z-10">
@@ -131,7 +130,7 @@ export default async function AdminDashboard() {
               <i className="fa-solid fa-map-location-dot"></i>
             </div>
             <p className={`${inter.className} text-amber-900 font-bold text-sm mb-1`}>Pencarian Mitra</p>
-            <h2 className="text-3xl font-black text-gray-900">{totalKlikMitra.toLocaleString('id-ID')} <span className="text-sm text-amber-800 font-bold tracking-widest uppercase">+Leads</span></h2>
+            <h2 className="text-3xl font-black text-gray-900">{(totalKlikMitra || 0).toLocaleString('id-ID')} <span className="text-sm text-amber-800 font-bold tracking-widest uppercase">+Leads</span></h2>
           </div>
         </div>
 
@@ -152,29 +151,29 @@ export default async function AdminDashboard() {
           <div className="space-y-5">
             {produkTerpopuler.map((prod, index) => {
               const maxKlik = produkTerpopuler[0]?.klik || 1;
-              const percentage = Math.round((prod.klik / maxKlik) * 100);
+              const currentKlik = Number(prod.klik) || 0;
+              const percentage = Math.round((currentKlik / maxKlik) * 100) || 0;
               
               return (
                 <div key={index} className="flex items-center gap-4">
                   <div className="w-8 font-black text-gray-300 text-xl text-right">0{index + 1}</div>
                   <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
-                    {/* FIX 5: Menyuruh ESLint untuk diam khusus di baris ini, karena kita butuh tag <img> untuk fallback onError */}
+                    {/* Menyuruh ESLint untuk diam khusus di baris ini */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={prod.foto_produk ? `/uploads/produk/${prod.foto_produk}` : '/placeholder-product.png'} 
-                      alt="Produk" 
+                      alt={prod.nama_produk} 
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = 'https://placehold.co/100x100?text=No+Img'; }}
+                      /* ATRIBUT ONERROR DIHAPUS DARI SINI KARENA DILARANG DI SERVER COMPONENT */
                     />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-end mb-1.5">
                       <p className="font-extrabold text-gray-900 text-sm">{prod.nama_produk}</p>
                       <p className={`${inter.className} font-bold text-gray-500 text-xs`}>
-                        <i className="fa-solid fa-eye text-brand-gold mr-1"></i> {prod.klik.toLocaleString('id-ID')}
+                        <i className="fa-solid fa-eye text-brand-gold mr-1"></i> {currentKlik.toLocaleString('id-ID')}
                       </p>
                     </div>
-                    {/* FIX 6: bg-gradient-to-r diubah jadi bg-linear-to-r */}
                     <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                       <div 
                         className={`h-full rounded-full ${index === 0 ? 'bg-linear-to-r from-brand-gold to-amber-500' : 'bg-gray-800'}`} 
