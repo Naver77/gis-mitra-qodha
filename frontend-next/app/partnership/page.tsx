@@ -50,7 +50,7 @@ export default async function PartnershipPage() {
   const benefits = [
     { name: 'Mendapatkan harga termurah di kategori kemitraan', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Mendapatkan Banner 3 x 1 m (Free Desain & Cetak)', r: 'no', a: 'yes', d: 'yes' },
-    { name: 'Jaminan Kemudahan Bermitra', r: 'no', a: 'no', d: 'vip' },
+    { name: 'Jaminan Kemudahan Bermitra', r: 'no', a: 'no', d: 'yes' },
     { name: 'Mendapatkan Soft & Hard Copy Katalog', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Free Konsultasi Ads, Content Marketing & Sosmed', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Free Produk Tester & Sample Terbaru', r: 'no', a: 'yes', d: 'yes' },
