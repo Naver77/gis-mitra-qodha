@@ -3,7 +3,7 @@ import React from 'react';
 export default function AboutPage() {
   return (
     <div className="bg-white min-h-screen">
-      <section className="py-24 md:py-32 flex items-center pt-32 relative overflow-hidden">
+      <section className="py-24 md:py-32 flex items-center relative overflow-hidden">
         {/* Dekorasi Background */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold/10 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-green/10 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3"></div>
@@ -20,7 +20,7 @@ export default function AboutPage() {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-            <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition duration-300 group">
+            <div className="p-8 bg-gray-50 rounded-4xl border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition duration-300 group">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform">
                 <i className="fa-solid fa-leaf text-3xl text-brand-green"></i>
               </div>
@@ -30,7 +30,7 @@ export default function AboutPage() {
               </p>
             </div>
             
-            <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition duration-300 group">
+            <div className="p-8 bg-gray-50 rounded-4xl border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition duration-300 group">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform">
                 <i className="fa-solid fa-star text-3xl text-brand-gold"></i>
               </div>
@@ -40,7 +40,7 @@ export default function AboutPage() {
               </p>
             </div>
             
-            <div className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition duration-300 group">
+            <div className="p-8 bg-gray-50 rounded-4xl border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition duration-300 group">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform">
                 <i className="fa-solid fa-users text-3xl text-blue-500"></i>
               </div>
