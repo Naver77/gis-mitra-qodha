@@ -34,7 +34,6 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // FIX 1: Pindahkan deklarasi fungsi ke atas dan gunakan useCallback
   const handleNextSlide = useCallback(() => {
     if (isAnimating) return;
     setIsAnimating(true);
@@ -49,13 +48,12 @@ export default function Home() {
     setTimeout(() => setIsAnimating(false), 500);
   };
 
-  // FIX 2: useEffect diletakkan setelah deklarasi fungsi
   useEffect(() => {
     const timer = setInterval(() => {
       handleNextSlide();
     }, 5000);
     return () => clearInterval(timer);
-  }, [handleNextSlide]); // Memasukkan handleNextSlide sebagai dependensi
+  }, [handleNextSlide]);
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -63,8 +61,9 @@ export default function Home() {
       {/* ====================================================
           1. HERO SECTION (Dynamic Slider)
       ==================================================== */}
-      <section className="relative w-full bg-white overflow-hidden pt-4 pb-16 lg:pb-24">
-        {/* FIX 3: bg-gradient-to-bl diganti menjadi bg-linear-to-bl untuk Tailwind v4 */}
+      {/* FIX: pt-4 diubah menjadi pt-28 md:pt-36 agar teks tidak tertabrak Navbar */}
+      <section className="relative w-full bg-white overflow-hidden pt-28 md:pt-36 pb-16 lg:pb-24">
+        
         <div className={`absolute top-0 right-0 w-1/2 h-full bg-linear-to-bl ${heroProducts[currentSlide].color} opacity-50 transition-colors duration-1000 rounded-bl-[100px] -z-10`}></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -114,7 +113,6 @@ export default function Home() {
               <div className="absolute inset-0 flex items-center justify-center -z-10">
                 <div className="w-75 h-75 sm:w-100 sm:h-100 bg-gray-50 rounded-full"></div>
               </div>
-              {/* FIX 4: Disable eslint warning untuk img html standar khusus line ini */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={heroProducts[currentSlide].image} 
@@ -197,7 +195,7 @@ export default function Home() {
       </section>
 
       {/* ====================================================
-          4. CTA (Call To Action) BANNER
+          4. CTA BANNER
       ==================================================== */}
       <section className="w-full py-16 px-4">
         <div className="max-w-5xl mx-auto bg-gray-900 rounded-[3rem] p-10 md:p-16 text-center relative overflow-hidden shadow-2xl">

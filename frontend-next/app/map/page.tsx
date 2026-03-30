@@ -169,7 +169,7 @@ export default function PetaKemitraanPage() {
 
   // TAMPILAN UTAMA (Sidebar Kiri & Peta Kanan)
   return (
-    <div className="pt-21.25 h-dvh w-full flex flex-col md:flex-row overflow-hidden bg-white z-40 relative">
+    <div className="flex-1 w-full flex flex-col md:flex-row overflow-hidden bg-white z-40 relative h-[calc(100dvh-70px)] md:h-[calc(100dvh-85px)]">
       
       {/* Komponen Sidebar yang sudah Anda perbarui */}
       <MapSidebar 
