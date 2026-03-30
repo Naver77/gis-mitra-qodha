@@ -1,15 +1,52 @@
-"use client";
 import React from 'react';
 import Link from 'next/link';
+import pool from '@/lib/db';
+import { RowDataPacket } from 'mysql2';
 
 // === HELPER FUNCTION ===
 const formatRupiah = (angka: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 };
 
-export default function PartnershipPage() {
+// MENDUPLIKASI STRUKTUR TABEL DATABASE ANDA
+interface HargaKemitraan {
+  id_harga: number;
+  kategori: string;
+  nama_produk: string;
+  isi: string;
+  satuan: string;
+  qty: number;
+  qty2: string | number;
+  harga_het: number;
+  harga_reseller: number;
+  harga_agen: number;
+  harga_distributor: number;
+}
+
+export default async function PartnershipPage() {
   
-  // === DATA DUMMY (MENGGANTIKAN DATABASE PHP) ===
+  // === MENGAMBIL DATA DARI DATABASE ===
+  let pricelist: HargaKemitraan[] = [];
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM tb_harga_kemitraan ORDER BY kategori ASC, id_harga ASC');
+    pricelist = rows as HargaKemitraan[];
+  } catch (error) {
+    console.error("Gagal mengambil data tb_harga_kemitraan:", error);
+    // Fallback Dummy Data jika DB belum siap (Mencegah web blank)
+    pricelist = [
+      { id_harga: 1, kategori: "Bukhur", nama_produk: "Bukhur Pouch (100gr)", isi: "100gr", satuan: "Karton", qty: 72, qty2: 1, harga_het: 25000, harga_reseller: 22000, harga_agen: 21000, harga_distributor: 19000 },
+      { id_harga: 2, kategori: "Dupa", nama_produk: "Dupa Kerucut (Isi 50)", isi: "50pcs", satuan: "Karton", qty: 48, qty2: 1, harga_het: 25000, harga_reseller: 20000, harga_agen: 19000, harga_distributor: 17000 },
+    ];
+  }
+
+  // === LOGIKA GROUPING UNTUK TABEL HET (Mirip PHP Anda) ===
+  const groupedHet = pricelist.reduce((acc, curr) => {
+    if (!acc[curr.kategori]) acc[curr.kategori] = [];
+    acc[curr.kategori].push(curr);
+    return acc;
+  }, {} as Record<string, HargaKemitraan[]>);
+
+  // === DATA STATIS (Benefits & Tiers) ===
   const benefits = [
     { name: 'Mendapatkan harga termurah di kategori kemitraan', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Mendapatkan Banner 3 x 1 m (Free Desain & Cetak)', r: 'no', a: 'yes', d: 'yes' },
@@ -22,31 +59,6 @@ export default function PartnershipPage() {
     { name: 'Full Support (Katalog Drive, Cek Stok, Info Terbaru)', r: 'yes', a: 'yes', d: 'vip' },
   ];
 
-  const pricelist = [
-    { nama_produk: "Parfum Kasturi Kijang Premium", qty: 1, satuan: "Karton", harga_reseller: 900000, harga_agen: 800000, harga_distributor: 700000 },
-    { nama_produk: "Misk Thaharah 3ml", qty: 1, satuan: "Lusin", harga_reseller: 150000, harga_agen: 130000, harga_distributor: 110000 },
-    { nama_produk: "Dupa Kerucut Keraton", qty: 1, satuan: "Karton", harga_reseller: 450000, harga_agen: 400000, harga_distributor: 350000 },
-    { nama_produk: "Bukhur Maghribi", qty: 1, satuan: "Lusin", harga_reseller: 250000, harga_agen: 220000, harga_distributor: 190000 },
-  ];
-
-  const groupedHet = [
-    {
-      kategori: "PARFUM SPRAY",
-      items: [
-        { nama_produk: "Oud Al Layl 35ml", isi: "35 ml", qty2: "1 Pcs", harga_het: 85000 },
-        { nama_produk: "Raudhah Blend 35ml", isi: "35 ml", qty2: "1 Pcs", harga_het: 85000 },
-      ]
-    },
-    {
-      kategori: "WEWANGIAN BAKAR",
-      items: [
-        { nama_produk: "Bukhur Maghribi", isi: "50 gr", qty2: "1 Pcs", harga_het: 35000 },
-        { nama_produk: "Dupa Kerucut", isi: "50 pcs", qty2: "1 Pcs", harga_het: 25000 },
-      ]
-    }
-  ];
-
-  // Helper Render Icon untuk Tabel Benefit
   const renderIcon = (status: string) => {
     if (status === 'yes') return <i className="fa-solid fa-circle-check text-green-500 text-lg"></i>;
     if (status === 'vip') return <i className="fa-solid fa-crown text-brand-gold text-xl drop-shadow-md animate-pulse"></i>;
@@ -57,13 +69,13 @@ export default function PartnershipPage() {
     <div className="w-full flex flex-col bg-white">
       
       {/* ====================================================
-          1. HERO SECTION (Minimalis nan Elegan)
+          1. HERO SECTION
       ==================================================== */}
       <section className="relative bg-gray-900 py-20 overflow-hidden z-0">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')]"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full mix-blend-multiply filter blur-[100px] opacity-20 z-0"></div>
         
-        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center animate-fade-in-up">
           <span className="inline-block py-1.5 px-5 rounded-full bg-brand-gold/20 border border-brand-gold/40 text-brand-gold text-xs font-black tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
             <i className="fa-solid fa-fire mr-2"></i> Peluang Bisnis 2026
           </span>
@@ -197,7 +209,7 @@ export default function PartnershipPage() {
       </section>
 
       {/* ====================================================
-          4. ANALISA MODAL (Tier Pricing Comparison)
+          4. ANALISA MODAL (Tier Pricing Comparison dari Database)
       ==================================================== */}
       <section id="analisa" className="py-20 bg-gray-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -214,7 +226,6 @@ export default function PartnershipPage() {
               <thead className="bg-gray-900 text-white uppercase font-black tracking-widest text-xs">
                 <tr>
                   <th className="px-4 py-4 text-center border-r border-gray-700 w-12">No</th>
-                  {/* Sticky Column untuk Nama Produk */}
                   <th className="px-6 py-4 sticky left-0 bg-gray-900 z-20 border-r border-gray-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">Produk</th>
                   <th className="px-6 py-4 text-center bg-gray-800 border-r border-gray-700">Reseller <span className="block text-[9px] font-bold text-gray-400 mt-1">Tier 3</span></th>
                   <th className="px-6 py-4 text-center bg-gray-800 border-r border-gray-700">Agen <span className="block text-[9px] font-bold text-gray-400 mt-1">Tier 2</span></th>
@@ -223,24 +234,32 @@ export default function PartnershipPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium text-gray-700 text-sm">
                 {pricelist.map((row, index) => {
-                  const hemat = (row.harga_reseller - row.harga_distributor);
+                  // MENGHITUNG TOTAL HARGA (Sama seperti PHP)
+                  const totalReseller = row.harga_reseller * row.qty;
+                  const totalAgen = row.harga_agen * row.qty;
+                  const totalDistributor = row.harga_distributor * row.qty;
+                  const hemat = (row.harga_reseller - row.harga_distributor) * row.qty;
+
                   return (
-                    <tr key={index} className="hover:bg-blue-50/20 transition duration-150 group">
+                    <tr key={row.id_harga} className="hover:bg-blue-50/20 transition duration-150 group">
                       <td className="px-4 py-4 text-center font-bold text-gray-400 border-r border-gray-100">{index + 1}</td>
-                      <td className="px-6 py-4 font-black text-gray-900 sticky left-0 bg-white group-hover:bg-blue-50/50 z-10 border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors">
+                      <td className="px-6 py-4 font-black text-gray-900 sticky left-0 bg-white group-hover:bg-blue-50/50 z-10 border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] transition-colors align-middle">
                         <div className="leading-tight">{row.nama_produk}</div>
-                        <div className="text-[10px] text-brand-gold font-bold uppercase tracking-widest mt-1.5">{row.qty} {row.satuan}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1.5">{row.qty} {row.satuan}</div>
                       </td>
                       <td className="px-6 py-4 text-center border-r border-gray-100 align-middle">
                         <div className="font-bold text-gray-700 text-base">{formatRupiah(row.harga_reseller)}</div>
+                        <div className="text-[10px] text-gray-400 mt-1 leading-none uppercase tracking-wide">Total: {formatRupiah(totalReseller)}</div>
                       </td>
-                      <td className="px-6 py-4 text-center border-r border-gray-100 bg-green-50/20 align-middle">
+                      <td className="px-6 py-4 text-center border-r border-gray-100 bg-green-50/10 align-middle">
                         <div className="font-bold text-brand-green text-base">{formatRupiah(row.harga_agen)}</div>
+                        <div className="text-[10px] text-green-600/60 mt-1 leading-none uppercase tracking-wide">Total: {formatRupiah(totalAgen)}</div>
                       </td>
                       <td className="px-6 py-4 text-center bg-yellow-50/40 relative group-hover:bg-yellow-100/40 transition align-middle">
                         <div className="font-black text-gray-900 text-lg">{formatRupiah(row.harga_distributor)}</div>
+                        <div className="text-[10px] text-gray-500 mt-1 font-semibold leading-none uppercase tracking-wide">Total: {formatRupiah(totalDistributor)}</div>
                         {hemat > 0 && (
-                          <div className="mt-2 inline-block bg-brand-green text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
+                          <div className="mt-2 inline-block bg-brand-green text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded shadow-sm">
                             Hemat {formatRupiah(hemat)}
                           </div>
                         )}
@@ -251,11 +270,16 @@ export default function PartnershipPage() {
               </tbody>
             </table>
           </div>
+          
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 font-medium bg-white px-6 py-3 rounded-full border border-gray-200 w-fit mx-auto shadow-sm">
+            <i className="fa-solid fa-circle-info text-blue-500"></i>
+            <span>Harga di atas adalah Harga Satuan (Pcs) & Total Per {pricelist.length > 0 ? pricelist[0].satuan : 'Karton/Lusin'}.</span>
+          </div>
         </div>
       </section>
 
       {/* ====================================================
-          5. HARGA ECERAN TERTINGGI (HET)
+          5. HARGA ECERAN TERTINGGI (HET - Grouping dari Database)
       ==================================================== */}
       <section className="py-20 bg-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -271,38 +295,41 @@ export default function PartnershipPage() {
               <thead className="bg-gray-800 text-white uppercase font-black text-xs tracking-widest">
                 <tr>
                   <th className="px-6 py-5 text-center w-16 border-r border-gray-700">No</th>
-                  <th className="px-6 py-5 border-r border-gray-700">Kategori & Nama Produk</th>
+                  <th className="px-6 py-5 border-r border-gray-700">Nama Produk</th>
                   <th className="px-6 py-5 text-center w-24 border-r border-gray-700">Isi</th>
-                  <th className="px-6 py-5 text-right bg-blue-600">Harga Jual Satuan</th>
+                  <th className="px-6 py-5 text-center w-24 border-r border-gray-700">Qty</th>
+                  <th className="px-6 py-5 text-right bg-blue-600">Harga Satuan</th>
                 </tr>
               </thead>
               <tbody className="bg-white text-gray-700">
-                {groupedHet.map((group, gIdx) => (
+                {Object.entries(groupedHet).map(([kategori, items], gIdx) => (
                   <React.Fragment key={gIdx}>
-                    {/* Header Kategori */}
+                    {/* Header Kategori (Grouping Row yang elegan) */}
                     <tr className="bg-blue-50/80">
-                      <td colSpan={4} className="px-6 py-3 font-black text-blue-800 uppercase tracking-widest text-xs border-y border-blue-100">
-                        <i className="fa-solid fa-layer-group mr-2 opacity-50"></i> {group.kategori}
+                      <td colSpan={5} className="px-6 py-3 font-black text-blue-800 uppercase tracking-widest text-xs border-y border-blue-100">
+                        <i className="fa-solid fa-layer-group mr-2 opacity-50"></i> {kategori}
                       </td>
                     </tr>
-                    {/* Item Produk */}
-                    {group.items.map((item, iIdx) => (
-                      <tr key={iIdx} className="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
+                    {/* Item Produk dalam Kategori Tersebut */}
+                    {items.map((item, iIdx) => (
+                      <tr key={item.id_harga} className="hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
                         <td className="px-6 py-4 text-center font-bold text-gray-400 border-r border-gray-100">{iIdx + 1}</td>
                         <td className="px-6 py-4 font-bold text-gray-800 border-r border-gray-100">{item.nama_produk}</td>
-                        <td className="px-6 py-4 text-center font-bold text-gray-500 border-r border-gray-100 bg-gray-50">{item.isi}</td>
-                        <td className="px-6 py-4 text-right font-black text-blue-600 text-base">{formatRupiah(item.harga_het)}</td>
+                        <td className="px-6 py-4 text-center font-bold text-gray-500 border-r border-gray-100 bg-gray-50/50">{item.isi}</td>
+                        <td className="px-6 py-4 text-center font-bold text-gray-500 border-r border-gray-100">{item.qty2}</td>
+                        <td className="px-6 py-4 text-right font-black text-blue-600 text-base bg-blue-50/10">{formatRupiah(item.harga_het)}</td>
                       </tr>
                     ))}
                   </React.Fragment>
                 ))}
+                
+                {Object.keys(groupedHet).length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400 italic">Belum ada data produk di database.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
-          </div>
-          
-          <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-500 font-medium bg-gray-50 px-6 py-3 rounded-full border border-gray-200 w-fit mx-auto shadow-sm">
-            <i className="fa-solid fa-circle-info text-blue-500"></i>
-            <span>Harga di atas adalah Harga Eceran Standar (Satuan/Pcs).</span>
           </div>
         </div>
       </section>
@@ -313,9 +340,7 @@ export default function PartnershipPage() {
       <section className="py-24 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-[3rem] p-8 md:p-14 flex flex-col md:flex-row items-center gap-10 shadow-2xl relative overflow-hidden">
-            
             <i className="fa-solid fa-map absolute -right-20 -bottom-20 text-[250px] text-white/5 rotate-12 pointer-events-none"></i>
-
             <div className="flex-1 space-y-6 relative z-10 text-center md:text-left">
               <span className="inline-block px-4 py-1.5 bg-white/10 border border-white/20 text-brand-gold text-xs font-black uppercase tracking-widest rounded-full backdrop-blur-sm">
                 Sistem WebGIS Eksklusif
@@ -342,7 +367,6 @@ export default function PartnershipPage() {
                 <div className="absolute inset-0 border-4 border-brand-gold/20 rounded-4xl pointer-events-none"></div>
               </div>
             </div>
-
           </div>
         </div>
       </section>
