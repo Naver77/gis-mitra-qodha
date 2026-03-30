@@ -38,7 +38,7 @@ export default function FAQPage() {
   }, [searchQuery, activeTab]);
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-20 pt-21.25">
+    <div className="bg-gray-50 min-h-screen pb-20">
       
       {/* HEADER SEARCH */}
       <section className="relative bg-gray-900 py-24 px-4 overflow-hidden">

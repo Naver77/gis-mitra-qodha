@@ -86,7 +86,7 @@ export default function ProductsPage() {
     <div className="bg-gray-50 min-h-screen pb-20">
       
       {/* HEADER SECTION */}
-      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pt-32 md:pt-40 pb-12 md:pb-16 px-4 relative overflow-hidden">
+      <section className="bg-gray-900 text-white min-h-[35vh] md:min-h-[45vh] flex flex-col items-center justify-center pb-12 md:pb-16 px-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full blur-3xl opacity-20 pointer-events-none"></div>
         

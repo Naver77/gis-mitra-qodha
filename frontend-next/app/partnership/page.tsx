@@ -70,7 +70,7 @@ export default function PartnershipPage() {
     <div className="bg-gray-50 min-h-screen font-sans">
       
       {/* HERO SECTION */}
-      <section className="bg-gray-900 text-white pt-32 pb-20 px-4 relative overflow-hidden">
+      <section className="bg-gray-900 text-white pb-20 px-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-600 rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
         

@@ -19,7 +19,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="pt-[85px]">
+    <div className="pt-0">
       {/* 1. HERO SECTION */}
       <section className="relative w-full bg-gray-900 py-24 overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
@@ -117,7 +117,7 @@ export default function ContactPage() {
               </a>
             </div>
 
-            <div className="relative h-[450px] md:h-[500px] w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-gray-200">
+            <div className="relative h-112.5 md:h-125 w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-gray-200">
               <DynamicContactMap />
             </div>
 
