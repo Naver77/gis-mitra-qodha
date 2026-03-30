@@ -51,11 +51,11 @@ export default async function PartnershipPage() {
     { name: 'Mendapatkan harga termurah di kategori kemitraan', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Mendapatkan Banner 3 x 1 m (Free Desain & Cetak)', r: 'no', a: 'yes', d: 'yes' },
     { name: 'Jaminan Kemudahan Bermitra', r: 'no', a: 'no', d: 'vip' },
-    { name: 'Mendapatkan Soft & Hard Copy Katalog', r: 'yes', a: 'yes', d: 'yes' },
+    { name: 'Mendapatkan Soft & Hard Copy Katalog', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Free Konsultasi Ads, Content Marketing & Sosmed', r: 'yes', a: 'yes', d: 'vip' },
     { name: 'Free Produk Tester & Sample Terbaru', r: 'no', a: 'yes', d: 'yes' },
     { name: 'Program Promo Kemitraan Khusus', r: 'yes', a: 'yes', d: 'vip' },
-    { name: 'Akrilik display parfum eksklusif', r: 'no', a: 'no', d: 'yes' },
+    { name: 'Free Akrilik display parfum 6ml & 35ml jika ambil produk parfum.', r: 'no', a: 'no', d: 'yes' },
     { name: 'Full Support (Katalog Drive, Cek Stok, Info Terbaru)', r: 'yes', a: 'yes', d: 'vip' },
   ];
 
@@ -69,22 +69,46 @@ export default async function PartnershipPage() {
     <div className="w-full flex flex-col bg-white">
       
       {/* ====================================================
-          1. HERO SECTION
+          1. HERO SECTION (High Engagement Copywriting)
       ==================================================== */}
-      <section className="relative bg-gray-900 py-20 overflow-hidden z-0">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')]"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold rounded-full mix-blend-multiply filter blur-[100px] opacity-20 z-0"></div>
+      <section className="relative bg-gray-900 pt-24 pb-32 overflow-hidden z-0">
+        {/* Background Patterns & Glow */}
+        <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')]"></div>
+        <div className="absolute top-1/4 left-0 w-125 h-125 bg-brand-green rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-pulse z-0" style={{ animationDuration: '4s' }}></div>
+        <div className="absolute bottom-0 right-0 w-150 h-150 bg-brand-gold rounded-full mix-blend-multiply filter blur-[150px] opacity-20 animate-pulse z-0" style={{ animationDuration: '6s' }}></div>
         
-        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center animate-fade-in-up">
-          <span className="inline-block py-1.5 px-5 rounded-full bg-brand-gold/20 border border-brand-gold/40 text-brand-gold text-xs font-black tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-            <i className="fa-solid fa-fire mr-2"></i> Peluang Bisnis 2026
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center animate-fade-in-up">
+          
+          <span className="inline-flex items-center gap-2 py-1.5 px-5 rounded-full bg-brand-gold/10 border border-brand-gold/30 text-brand-gold text-xs font-black tracking-widest uppercase mb-8 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+            <span className="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span> Terbatas: 1 Distributor Per Kota
           </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
-            Struktur Harga & <span className="text-transparent bg-clip-text bg-linear-to-r from-brand-gold to-yellow-200">Keuntungan</span>
+          
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
+            Amankan Wilayah Anda, <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-brand-gold via-yellow-200 to-brand-gold">Raih Profit Maksimal</span>
           </h1>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg font-medium leading-relaxed">
-            Transparansi harga modal untuk setiap level mitra. Bandingkan dan pilih paket cuan terbaik untuk masa depan bisnis Anda bersama Qodha Aromatic.
+          
+          <p className="text-gray-400 max-w-3xl mx-auto text-lg md:text-xl font-medium leading-relaxed mb-12">
+            Lebih dari sekadar berbisnis, ini adalah jalan menebar kebaikan. Nikmati margin profit tinggi, dukungan marketing eksklusif, dan <strong className="text-white">sistem WebGIS pintar</strong> yang siap mengarahkan pelanggan langsung ke toko Anda.
           </p>
+
+          {/* Double Call to Action (CTA) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+            <a href="#paket" className="w-full sm:w-auto px-8 py-4 bg-brand-gold text-gray-900 font-black rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:shadow-[0_0_30px_rgba(251,191,36,0.5)] transform hover:-translate-y-1 flex items-center justify-center gap-2 group">
+              <i className="fa-solid fa-rocket group-hover:animate-bounce"></i> Lihat Paket Kemitraan
+            </a>
+            <a href="https://wa.me/6281717302223?text=Halo Admin, saya tertarik mengamankan kuota wilayah Mitra Qodha Aromatic" target="_blank" rel="noreferrer" className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
+              <i className="fa-brands fa-whatsapp text-green-400 text-xl"></i> Konsultasi Gratis
+            </a>
+          </div>
+
+        </div>
+
+        {/* Pemisah Gelombang di bawah Hero */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 transform translate-y-1">
+          <svg className="relative block w-[calc(100%+1.3px)] h-10 md:h-15" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118.08,130.83,119.2,192.4,101.4,237.49,88.4,281.42,72.4,321.39,56.44Z" className="fill-gray-50"></path>
+          </svg>
         </div>
       </section>
 
