@@ -1,5 +1,6 @@
+"use client";
 import React, { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Mitra } from '@/lib/geo-utils';
@@ -27,7 +28,6 @@ interface GeoJsonData {
   features: GeoJsonFeature[];
 }
 
-// 1. FUNGSI PINTAR: Normalisasi Nama Kota (Fuzzy Matching)
 const normalizeCityName = (name: string | undefined) => {
   if (!name) return '';
   return name
@@ -36,13 +36,32 @@ const normalizeCityName = (name: string | undefined) => {
     .trim(); 
 };
 
-// 2. KOMPONEN KONTROL ZOOM (Untuk Semantic Zooming)
+// 1. KONTROL ZOOM
 function MapEventController({ setZoomLevel }: { setZoomLevel: (z: number) => void }) {
   const map = useMapEvents({
     zoomend: () => {
       setZoomLevel(map.getZoom());
     },
   });
+  return null;
+}
+
+// 2. FUNGSI PENYELAMAT UKURAN
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 500);
+    
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    }
+  }, [map]);
   return null;
 }
 
@@ -58,15 +77,13 @@ export default function MapView({
   const [geoJsonData, setGeoJsonData] = useState<GeoJsonData | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(12); 
 
-  // A. MEMUAT DATA GEOJSON
   useEffect(() => {
-    fetch('/data/batas_kabupaten.geojson')
+    fetch('/assets/geojson/batas_kabupaten.geojson')
       .then((res) => res.json())
       .then((data: GeoJsonData) => setGeoJsonData(data))
       .catch((err) => console.error("Gagal memuat GeoJSON:", err));
   }, []);
 
-  // B. MENGHITUNG KEPADATAN MITRA PER KOTA
   const cityMitraCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     processedMitra.forEach(mitra => {
@@ -78,7 +95,6 @@ export default function MapView({
     return counts;
   }, [processedMitra]);
 
-  // C. LOGIKA WARNA CHOROPLETH
   const getFeatureStyle = (feature: GeoJsonFeature) => {
     const rawWADMKK = feature.properties?.WADMKK || '';
     const cleanFeatureName = normalizeCityName(rawWADMKK);
@@ -104,7 +120,6 @@ export default function MapView({
     };
   };
 
-  // D. KUSTOMISASI ICON MARKER
   const createNumberedIcon = (num: number, level: string, isActive: boolean) => {
     let colorClass = 'bg-gray-800';
     if (level === 'Distributor') colorClass = 'bg-yellow-500 text-gray-900';
@@ -122,88 +137,98 @@ export default function MapView({
   };
 
   return (
-    <div className="w-full md:w-2/3 h-[50dvh] md:h-full bg-gray-200 relative z-10">
-      <MapContainer center={[mapCenter.lat, mapCenter.lng]} zoom={zoomLevel} style={{ height: '100%', width: '100%', zIndex: 10 }}>
-        
-        <MapEventController setZoomLevel={setZoomLevel} />
+    <div className="flex-1 min-w-0 w-full h-[50dvh] md:h-auto md:self-stretch bg-gray-200 relative z-10">
+      
+      <div className="absolute inset-0">
+        {/* FIX PERFORMANCE: Menambahkan preferCanvas={true} agar rendering super cepat */}
+        <MapContainer 
+          center={[mapCenter.lat, mapCenter.lng]} 
+          zoom={zoomLevel} 
+          preferCanvas={true} 
+          style={{ height: '100%', width: '100%', zIndex: 10 }}
+        >
+          
+          <MapResizer />
+          <MapEventController setZoomLevel={setZoomLevel} />
 
-        <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
-        
-        {geoJsonData && (
-          <GeoJSON 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            data={geoJsonData as any} 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            style={getFeatureStyle as any} 
-            onEachFeature={(feature: GeoJsonFeature, layer: L.Layer) => {
-              const rawWADMKK = feature.properties?.WADMKK || '';
-              const cleanName = normalizeCityName(rawWADMKK);
-              const count = cityMitraCounts[cleanName] || 0;
-              layer.bindTooltip(`<b>${rawWADMKK}</b><br/>${count} Mitra Aktif`);
-            }}
+          <TileLayer
+            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
-        )}
-        
-        {processedMitra.map((mitra, index) => {
-          const icon = createNumberedIcon(index + 1, mitra.level, activeMarker === String(mitra.id));
-          if (!icon) return null;
+          
+          {geoJsonData && (
+            <GeoJSON 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              data={geoJsonData as any} 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              style={getFeatureStyle as any} 
+              onEachFeature={(feature: GeoJsonFeature, layer: L.Layer) => {
+                const rawWADMKK = feature.properties?.WADMKK || '';
+                const cleanName = normalizeCityName(rawWADMKK);
+                const count = cityMitraCounts[cleanName] || 0;
+                layer.bindTooltip(`<b>${rawWADMKK}</b><br/>${count} Mitra Aktif`, { sticky: true });
+              }}
+            />
+          )}
+          
+          {processedMitra.map((mitra, index) => {
+            const icon = createNumberedIcon(index + 1, mitra.level, activeMarker === String(mitra.id));
+            if (!icon) return null;
 
-          return (
-            <React.Fragment key={`mitra-${mitra.id}`}>
-              {zoomLevel >= 12 && (
-                <Circle 
-                  center={[mitra.lat, mitra.lng]} 
-                  pathOptions={{ 
-                    fillColor: mitra.level === 'Distributor' ? '#fbbf24' : '#10b981', 
-                    color: 'transparent', 
-                    fillOpacity: 0.15 
-                  }} 
-                  radius={5000} 
-                />
-              )}
+            return (
+              <React.Fragment key={`mitra-${mitra.id}`}>
+                {zoomLevel >= 12 && (
+                  <Circle 
+                    center={[mitra.lat, mitra.lng]} 
+                    pathOptions={{ 
+                      fillColor: mitra.level === 'Distributor' ? '#fbbf24' : '#10b981', 
+                      color: 'transparent', 
+                      fillOpacity: 0.15 
+                    }} 
+                    radius={5000} 
+                  />
+                )}
 
-              <Marker 
-                position={[mitra.lat, mitra.lng]} 
-                icon={icon}
-                eventHandlers={{ click: () => handlePartnerClick(String(mitra.id)) }}
-              >
-                <Popup>
-                  <div className="text-center p-1 w-40">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase mb-1 text-white ${mitra.level === 'Distributor' ? 'bg-yellow-500 text-yellow-900' : mitra.level === 'Agen' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
-                      {mitra.level}
-                    </span>
-                    <h4 className="font-bold text-gray-900 mb-1 leading-tight">{mitra.nama_toko}</h4>
-                    {mitra.distance && <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">{mitra.distance.toFixed(2)} KM dari Anda</p>}
-                    
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerContactModal(mitra, mitra.distance);
-                      }} 
-                      className="w-full text-xs bg-gray-900 text-white px-3 py-2.5 rounded-lg font-bold hover:bg-brand-gold hover:text-gray-900 transition-colors block mt-2"
-                    >
-                      Hubungi Pusat
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            </React.Fragment>
-          );
-        })}
+                <Marker 
+                  position={[mitra.lat, mitra.lng]} 
+                  icon={icon}
+                  eventHandlers={{ click: () => handlePartnerClick(String(mitra.id)) }}
+                >
+                  <Popup>
+                    <div className="text-center p-1 w-40">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase mb-1 text-white ${mitra.level === 'Distributor' ? 'bg-yellow-500 text-yellow-900' : mitra.level === 'Agen' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
+                        {mitra.level}
+                      </span>
+                      <h4 className="font-bold text-gray-900 mb-1 leading-tight">{mitra.nama_toko}</h4>
+                      {mitra.distance && <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">{mitra.distance.toFixed(2)} KM dari Anda</p>}
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerContactModal(mitra, mitra.distance);
+                        }} 
+                        className="w-full text-xs bg-gray-900 text-white px-3 py-2.5 rounded-lg font-bold hover:bg-brand-gold hover:text-gray-900 transition-colors block mt-2"
+                      >
+                        Hubungi Pusat
+                      </button>
+                    </div>
+                  </Popup>
+                </Marker>
+              </React.Fragment>
+            );
+          })}
 
-        {userLoc && (
-          <Marker position={[userLoc.lat, userLoc.lng]} icon={L.divIcon({
-            html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-pulse"></div>`,
-            className: 'custom-user-icon',
-            iconSize: [16,16]
-          })}>
-            <Popup><span className="font-bold text-xs">Titik Lokasi Anda</span></Popup>
-          </Marker>
-        )}
-      </MapContainer>
+          {userLoc && (
+            <Marker position={[userLoc.lat, userLoc.lng]} icon={L.divIcon({
+              html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-pulse"></div>`,
+              className: 'custom-user-icon',
+              iconSize: [16,16]
+            })}>
+              <Popup><span className="font-bold text-xs">Titik Lokasi Anda</span></Popup>
+            </Marker>
+          )}
+        </MapContainer>
+      </div>
 
       <div className="absolute bottom-4 right-4 z-9999 flex flex-col gap-2 pointer-events-none items-end">
         {zoomLevel < 12 && (
@@ -214,7 +239,7 @@ export default function MapView({
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500 opacity-80"></span> Sedikit (1-3 Mitra)</div>
           </div>
         )}
-        <div className="bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg shadow-sm text-[10px] font-bold text-gray-500 border border-white">
+        <div className="bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-500 border border-white shadow-md">
           &copy; {new Date().getFullYear()} Qodha Aromatic GIS Data
         </div>
       </div>

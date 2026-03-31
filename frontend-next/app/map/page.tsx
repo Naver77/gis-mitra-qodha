@@ -18,7 +18,7 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
 });
 
 export default function PetaKemitraanPage() {
-  // State Utama Data (Tanpa setMitraList agar bebas ESLint warning)
+  // State Utama Data
   const [mitraList] = useState<Mitra[]>(mockMitra);
   const [userLoc, setUserLoc] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -6.200, lng: 106.816}); 
@@ -37,7 +37,6 @@ export default function PetaKemitraanPage() {
 
   // 1. Eksekusi GPS Otomatis saat pertama kali buka
   useEffect(() => {
-    // Pengecekan typeof window untuk keamanan SSR Next.js
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -171,7 +170,6 @@ export default function PetaKemitraanPage() {
   return (
     <div className="flex-1 w-full flex flex-col md:flex-row overflow-hidden bg-white z-40 relative h-[calc(100dvh-70px)] md:h-[calc(100dvh-85px)]">
       
-      {/* Komponen Sidebar yang sudah Anda perbarui */}
       <MapSidebar 
         processedMitra={processedMitra}
         activeLevel={activeLevel}
@@ -189,7 +187,6 @@ export default function PetaKemitraanPage() {
         setShowGuide={setShowGuide}
       />
 
-      {/* Komponen Peta Leaflet yang sudah bersih dari peringatan ESLint */}
       <MapView 
         processedMitra={processedMitra}
         mapCenter={mapCenter}
