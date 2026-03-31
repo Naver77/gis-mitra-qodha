@@ -5,8 +5,10 @@
   --color-brand-gold: #f59e0b;
   --color-brand-dark: #111827;
   --color-brand-green: #10b981;
-  /* Warna Oranye Kustom Qodha */
   --color-brand-orange: #ff6600; 
+
+  /* TAMBAHKAN BARIS INI: */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* RESET GLOBAL */

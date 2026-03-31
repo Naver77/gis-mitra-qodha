@@ -54,7 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // 5. Jika lolos semua ujian, tampilkan konten lengkap dengan Sidebar!
   // Note: Pastikan di dalam AdminWrapper, Anda tidak menimpa font utama (hindari pemakaian font-serif atau font lain yang bentrok).
   return (
-    <div className="font-sans antialiased bg-gray-50 min-h-screen text-gray-900">
+    <div className="antialiased bg-gray-50 min-h-screen text-gray-900">
       <AdminWrapper adminName={adminName}>
         {children}
       </AdminWrapper>

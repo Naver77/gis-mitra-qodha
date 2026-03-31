@@ -15,7 +15,7 @@ export default function AdminWrapper({ children, adminName }: { children: React.
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans selection:bg-brand-gold selection:text-gray-900">
+    <div className="flex h-screen bg-gray-50 overflow-hidden selection:bg-brand-gold selection:text-gray-900">
       
       {/* SIDEBAR (Desktop & Mobile) */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
