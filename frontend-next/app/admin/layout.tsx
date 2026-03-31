@@ -7,24 +7,33 @@ import AdminWrapper from './AdminWrapper';
 // PENTING: Secret Key ini HARUS SAMA dengan yang ada di lib/auth.ts
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'qodha-aromatic-rahasia-skripsi-s1');
 
+export const metadata = {
+  title: "Dashboard Admin - Qodha Aromatic",
+  description: "Sistem Manajemen WebGIS & Produk",
+};
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // 1. Baca URL saat ini (Dikirim dari middleware)
   const headersList = await headers();
   const currentPath = headersList.get('x-current-path') || '';
 
-  // 2. Jika ini halaman Login, JANGAN bungkus pakai Sidebar!
+  // 2. Jika ini halaman Login, JANGAN bungkus pakai Sidebar/Wrapper!
   if (currentPath === '/admin/login') {
-    return <>{children}</>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col font-sans antialiased">
+        {children}
+      </div>
+    );
   }
 
   // ==========================================
-  // LOGIKA KHUSUS DASHBOARD (Butuh Login)
+  // LOGIKA KHUSUS DASHBOARD (Butuh Login / JWT)
   // ==========================================
   
   const cookieStore = await cookies();
   const token = cookieStore.get('admin_session')?.value;
 
-  // 3. Jika tidak ada token sama sekali, tendang!
+  // 3. Jika tidak ada token sama sekali, tendang ke halaman login!
   if (!token) {
     redirect('/admin/login');
   }
@@ -43,5 +52,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   // 5. Jika lolos semua ujian, tampilkan konten lengkap dengan Sidebar!
-  return <AdminWrapper adminName={adminName}>{children}</AdminWrapper>;
+  // Note: Pastikan di dalam AdminWrapper, Anda tidak menimpa font utama (hindari pemakaian font-serif atau font lain yang bentrok).
+  return (
+    <div className="font-sans antialiased bg-gray-50 min-h-screen text-gray-900">
+      <AdminWrapper adminName={adminName}>
+        {children}
+      </AdminWrapper>
+    </div>
+  );
 }

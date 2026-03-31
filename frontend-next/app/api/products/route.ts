@@ -1,63 +1,57 @@
 import { NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
+import pool from '@/lib/db';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
-interface ProductRow {
-  id_produk: number | string;
-  nama_produk: string;
-  harga: number | string;
-  gender: string;
-  nama_kategori: string;
-}
-
+// 1. READ (GET) - Mengambil Data Produk beserta nama kategorinya
 export async function GET() {
   try {
-    // FIX: Menggunakan process.env agar AMAN saat di-push ke GitHub
-    // Jika di hosting, ia membaca .env. Jika di lokal, ia pakai fallback Laragon.
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || '127.0.0.1',
-      port: Number(process.env.DB_PORT) || 3308, // Default 3308 sesuai Laragon lokal Anda
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'db_qodha_gis'
-    });
-
-    const [rows] = await connection.execute(`
+    // MENGGUNAKAN POOL (Sangat aman untuk Production & Mencegah DB Crash)
+    const [rows] = await pool.query<RowDataPacket[]>(`
       SELECT 
-        p.id_produk, 
-        p.nama_produk, 
-        p.harga, 
-        p.gender,
+        p.*, 
         k.nama_kategori 
       FROM tb_produk p
-      JOIN tb_kategori k ON p.id_kategori = k.id_kategori
-      ORDER BY k.nama_kategori ASC, p.nama_produk ASC
+      LEFT JOIN tb_kategori k ON p.id_kategori = k.id_kategori
+      ORDER BY p.id_produk DESC
     `);
 
-    await connection.end();
-
-    const formattedData = (rows as ProductRow[]).map((row) => {
-      const isParfum = row.nama_kategori.toLowerCase().includes('parfum') || 
-                       row.nama_kategori.toLowerCase().includes('kasturi');
-
-      return {
-        id_produk: row.id_produk,
-        nama_produk: row.nama_produk,
-        nama_kategori: row.nama_kategori,
-        harga: Number(row.harga),
-        gambar: null,
-        rating: 5.0,
-        terjual: Math.floor(Math.random() * 500) + 50,
-        gender: isParfum ? row.gender : null, 
-      };
-    });
+    // Format data agar sesuai standar frontend
+    const formattedData = rows.map((row) => ({
+      ...row,
+      harga: Number(row.harga),
+      // Dummy data (Rating & Terjual) khusus untuk tampilan Katalog B2C jika dipanggil dari public
+      rating: 5.0,
+      terjual: Math.floor(Math.random() * 500) + 50,
+    }));
 
     return NextResponse.json(formattedData);
-
   } catch (error) {
-    console.error('Database API Error:', error);
-    return NextResponse.json(
-      { error: 'Gagal terhubung ke database. Periksa konfigurasi .env di hosting Anda.' },
-      { status: 500 }
-    );
+    console.error('API GET Products Error:', error);
+    return NextResponse.json({ error: 'Gagal terhubung ke database' }, { status: 500 });
+  }
+}
+
+// 2. CREATE & UPDATE & DELETE
+// Catatan Skripsi: Untuk operasi insert/update/delete form dengan FOTO (multipart/form-data), 
+// Next.js App Router merekomendasikan penggunaan Route Handler atau Server Actions spesifik.
+// Karena kita memakai REST API di halaman ini, kita pastikan frontend mengirim JSON untuk data dasar
+// atau mengandalkan file actions.ts milik Anda untuk upload foto fisik.
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) return NextResponse.json({ error: 'ID tidak ditemukan' }, { status: 400 });
+
+    // Hapus data dari database
+    await pool.query<ResultSetHeader>('DELETE FROM tb_produk WHERE id_produk=?', [id]);
+    
+    // (Opsional) Logika untuk menghapus file fisik foto_produk dari folder public/uploads bisa ditambahkan di sini
+
+    return NextResponse.json({ message: 'Berhasil dihapus' });
+  } catch (error) {
+    console.error("DELETE Error:", error);
+    return NextResponse.json({ error: 'Gagal hapus data' }, { status: 500 });
   }
 }

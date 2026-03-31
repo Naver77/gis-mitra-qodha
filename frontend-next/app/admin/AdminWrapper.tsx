@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link'; // TAMBAHAN WAJIB NEXT.JS
 
 export default function AdminWrapper({ children, adminName }: { children: React.ReactNode, adminName: string }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,18 +29,23 @@ export default function AdminWrapper({ children, adminName }: { children: React.
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (
-              <a key={item.path} href={item.path} onClick={() => setIsSidebarOpen(false)}
+              // PERUBAHAN: Gunakan <Link> agar perpindahan halaman mulus tanpa reload
+              <Link 
+                key={item.path} 
+                href={item.path} 
+                onClick={() => setIsSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm ${
                   isActive ? 'bg-brand-gold text-gray-900 shadow-[0_4px_15px_rgba(245,158,11,0.2)]' : 'text-gray-400 hover:text-white hover:bg-gray-800'
                 }`}
               >
                 <i className={`fa-solid ${item.icon} w-5 text-center ${isActive ? 'text-gray-900' : ''}`}></i>
                 {item.title}
-              </a>
+              </Link>
             );
           })}
 
           <p className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 mt-8">WebGIS Area</p>
+          {/* Untuk link ke luar Admin (seperti peta publik), tetap pakai <a> target="_blank" */}
           <a href="/map" target="_blank" className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm text-gray-400 hover:text-emerald-400 hover:bg-gray-800 group">
             <i className="fa-solid fa-map-location-dot w-5 text-center group-hover:animate-bounce"></i>
             Lihat Peta (Live)
@@ -47,6 +53,7 @@ export default function AdminWrapper({ children, adminName }: { children: React.
         </nav>
 
         <div className="p-4 border-t border-gray-800 shrink-0">
+          {/* Logout biarkan <a> agar browser benar-benar membersihkan sesi & cookie saat dipindah */}
           <a href="/admin/logout" className="flex items-center gap-3 justify-center w-full py-3 rounded-xl text-red-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 border border-transparent transition-all text-sm font-bold">
             <i className="fa-solid fa-power-off"></i> Keluar Sistem
           </a>
