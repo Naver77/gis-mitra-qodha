@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-// 1. KITA BUAT INTERFACE LOKAL YANG COCOK 100% DENGAN DATABASE KITA SEKARANG
 interface AdminMitraData {
   id: number;
   nama_toko: string;
@@ -28,70 +27,127 @@ export default function AdminMitraPage() {
   const [formData, setFormData] = useState<Partial<AdminMitraData>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [filterLevel, setFilterLevel] = useState<string>('Semua');
 
-  // === FITUR BARU: NOTIFIKASI TOAST ===
   const [toast, setToast] = useState<{ show: boolean; msg: string; type: 'success' | 'error' }>({ show: false, msg: '', type: 'success' });
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ show: true, msg, type });
     setTimeout(() => setToast({ show: false, msg: '', type: 'success' }), 3000);
   };
 
-  // === FITUR BARU: PAGINATION ===
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(mitras.length / itemsPerPage);
-  const currentData = mitras.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  
+  const filteredMitras = mitras.filter(m => filterLevel === 'Semua' || m.level === filterLevel);
+  const totalPages = Math.ceil(filteredMitras.length / itemsPerPage) || 1;
+  const currentData = filteredMitras.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => { setCurrentPage(1); }, [filterLevel]);
 
   const fetchMitra = async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/mitra');
       const data = await res.json();
-      setMitras(data);
-    } catch (err) {
-      console.error(err);
+      if (res.ok && Array.isArray(data)) setMitras(data);
+      else setMitras([]);
+    } catch {
+      setMitras([]);
       showToast("Gagal memuat data dari server", "error");
-    } finally {
-      setIsLoading(false);
+    } finally { setIsLoading(false); }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchMitra(); }, []);
+
+  // FITUR: Smart Extractor URL Google Maps + Reverse Geocoding
+  const handleExtractLocation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawText = e.target.value;
+    if (!rawText) return;
+
+    // 1. Regex untuk Koordinat
+    const regexLatLng = /(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/;
+    const matchLatLng = rawText.match(regexLatLng);
+
+    // 2. Regex untuk Nama Toko (jika dari link panjang Gmaps)
+    const regexPlace = /\/place\/([^\/]+)\//;
+    const matchPlace = rawText.match(regexPlace);
+    let extractedName = '';
+    if (matchPlace && matchPlace[1]) {
+      // Mengubah format url "Toko+Budi" menjadi "Toko Budi"
+      extractedName = decodeURIComponent(matchPlace[1].replace(/\+/g, ' '));
+    }
+
+    if (matchLatLng) {
+      const lat = parseFloat(matchLatLng[1]);
+      const lng = parseFloat(matchLatLng[2]);
+
+      showToast("Mengekstrak data wilayah...", "success");
+
+      try {
+        // 3. Reverse Geocoding API (OpenStreetMap)
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const geoData = await res.json();
+
+        if (geoData && geoData.address) {
+          const addr = geoData.address;
+          
+          // Memilah data wilayah
+          const kecamatan = addr.suburb || addr.village || addr.district || '';
+          const kota = (addr.city || addr.town || addr.county || '').replace(/kabupaten\s/i, '').replace(/kota\s/i, '').toUpperCase();
+          const provinsi = addr.state || '';
+          const alamatLengkap = geoData.display_name || '';
+
+          // Update seluruh form secara otomatis
+          setFormData(prev => ({
+            ...prev,
+            lat: lat,
+            lng: lng,
+            nama_toko: extractedName || prev.nama_toko || '',
+            kecamatan: kecamatan || prev.kecamatan || '',
+            kota: kota || prev.kota || '',
+            provinsi: provinsi || prev.provinsi || '',
+            alamat_lengkap: alamatLengkap || prev.alamat_lengkap || ''
+          }));
+
+          showToast("Koordinat & Alamat otomatis terisi!", "success");
+        } else {
+          // Fallback jika API tidak mengembalikan alamat lengkap
+          setFormData(prev => ({
+            ...prev, lat, lng, nama_toko: extractedName || prev.nama_toko || ''
+          }));
+          showToast("Koordinat berhasil, alamat rinci gagal didapat.", "success");
+        }
+      } catch (err) {
+        console.error("Geocoding Error:", err);
+        setFormData(prev => ({
+          ...prev, lat, lng, nama_toko: extractedName || prev.nama_toko || ''
+        }));
+        showToast("Koordinat terisi, tapi API Geocoding sibuk.", "success");
+      }
+
+      e.target.value = ''; // Kosongkan input setelah berhasil
+    } else if (rawText.includes("goo.gl") || rawText.includes("maps.app.goo.gl")) {
+      showToast("Gunakan Link Maps panjang dari browser PC atau Copy koordinat", "error");
+      e.target.value = '';
     }
   };
 
-  useEffect(() => {
-    fetchMitra();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.lat || !formData.lng) {
-      showToast("Klik pada peta untuk mengatur koordinat!", "error");
-      return;
-    }
-
+    if (!formData.lat || !formData.lng) { showToast("Klik pada peta untuk mengatur koordinat!", "error"); return; }
     setIsPending(true);
     try {
       const url = '/api/mitra';
       const method = isEditing ? 'PUT' : 'POST';
-      
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       if (res.ok) {
         showToast(isEditing ? 'Data Mitra berhasil diupdate!' : 'Mitra baru berhasil ditambah!');
         setIsModalOpen(false);
         await fetchMitra(); 
-      } else {
-        showToast('Terjadi kesalahan sistem', 'error');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Gagal menyimpan data', 'error');
-    } finally {
-      setIsPending(false);
-    }
+      } else { showToast('Terjadi kesalahan sistem', 'error'); }
+    } catch { showToast('Gagal menyimpan data', 'error'); } 
+    finally { setIsPending(false); }
   };
 
   const handleDelete = async (id: string | number) => {
@@ -103,151 +159,137 @@ export default function AdminMitraPage() {
           if (currentData.length === 1 && currentPage > 1) setCurrentPage(prev => prev - 1);
           await fetchMitra();
         }
-      } catch (err) {
-        console.error(err);
-        showToast('Gagal menghapus data', 'error');
-      }
+      } catch { showToast('Gagal menghapus data', 'error'); }
     }
   };
 
   const openModal = (mitra?: AdminMitraData) => {
-    if (mitra) {
-      setFormData(mitra);
-      setIsEditing(true);
-    } else {
-      setFormData({ level: 'Reseller', lat: 0, lng: 0 }); 
-      setIsEditing(false);
-    }
+    if (mitra) { setFormData(mitra); setIsEditing(true); } 
+    else { setFormData({ level: 'Reseller', lat: 0, lng: 0, nama_toko: '', pemilik: '', provinsi: '', kota: '', kecamatan: '', alamat_lengkap: '' }); setIsEditing(false); }
     setIsModalOpen(true);
   };
 
+  // MENGGUNAKAN REACT FRAGMENT (<>) AGAR MODAL BEBAS DARI JEBAKAN ANIMASI
   return (
-    <div className="p-4 md:p-8 animate-fade-in-up relative">
-      
-      {/* TOAST NOTIFICATION (Fix Class Tailwind z-200) */}
-      {toast.show && (
-        <div className={`fixed top-6 right-6 z-200 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-fade-in-up transition-colors ${
-          toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-50 text-red-600 border border-red-100'
-        }`}>
-          <i className={`fa-solid ${toast.type === 'success' ? 'fa-circle-check text-brand-gold' : 'fa-triangle-exclamation'} text-xl`}></i>
-          <span className="font-bold text-sm">{toast.msg}</span>
-        </div>
-      )}
-      
-      {/* HEADER & STATS */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900">Manajemen Mitra (WebGIS)</h1>
-            <p className="text-gray-500 font-medium">Kelola jaringan Mitra dan koordinat peta WebGIS.</p>
-          </div>
-          <button onClick={() => openModal()} className="bg-brand-gold hover:bg-yellow-500 text-gray-900 px-6 py-3 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
-            <i className="fa-solid fa-plus"></i> Tambah Mitra
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center text-xl"><i className="fa-solid fa-users"></i></div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase">Total Mitra</p>
-              <p className="text-2xl font-black text-gray-900">{mitras.length}</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 bg-brand-gold/20 text-yellow-700 rounded-xl flex items-center justify-center text-xl"><i className="fa-solid fa-crown"></i></div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase">Distributor</p>
-              <p className="text-2xl font-black text-gray-900">{mitras.filter(m => m.level === 'Distributor').length}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* TABEL MITRA */}
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold tracking-widest uppercase text-[10px]">
-              <tr>
-                <th className="px-6 py-4 w-16 text-center">No</th>
-                <th className="px-6 py-4">Toko & Pemilik</th>
-                <th className="px-6 py-4">Level</th>
-                <th className="px-6 py-4">Wilayah & Koordinat</th>
-                <th className="px-6 py-4 text-center w-28">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-medium text-sm">
-              {isLoading ? (
-                <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold animate-pulse">Memuat Data dari Database...</td></tr>
-              ) : currentData.length === 0 ? (
-                <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold italic">Belum ada data mitra.</td></tr>
-              ) : (
-                currentData.map((m, idx) => (
-                  <tr key={m.id} className="hover:bg-blue-50/10 transition">
-                    <td className="px-6 py-4 text-center text-gray-400 font-bold">
-                      {(currentPage - 1) * itemsPerPage + idx + 1}
-                    </td>
-                    <td className="px-6 py-4">
-                      {/* Fix Class Tailwind max-w-50 */}
-                      <div className="font-bold text-gray-900 max-w-50 truncate" title={m.nama_toko}>{m.nama_toko}</div>
-                      <div className="text-xs text-gray-500 mt-0.5 truncate max-w-50" title={m.pemilik}><i className="fa-solid fa-user text-[10px] mr-1"></i>{m.pemilik}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-md border ${
-                        m.level === 'Distributor' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                        m.level === 'Agen' ? 'bg-green-50 text-green-700 border-green-200' :
-                        'bg-blue-50 text-blue-700 border-blue-200'
-                      }`}>
-                        {m.level}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-gray-700"><i className="fa-solid fa-map-pin text-red-500 mr-1"></i> {m.kota || m.kecamatan}</div>
-                      <div className="text-[10px] text-gray-400 font-mono mt-1 bg-gray-50 inline-block px-1.5 py-0.5 rounded border border-gray-100">{m.lat}, {m.lng}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center gap-2">
-                        <button onClick={() => openModal(m)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition flex items-center justify-center" title="Edit">
-                          <i className="fa-solid fa-pen text-xs"></i>
-                        </button>
-                        <button onClick={() => handleDelete(m.id)} className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition flex items-center justify-center" title="Hapus">
-                          <i className="fa-solid fa-trash text-xs"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* PAGINATION CONTROLS */}
-        {!isLoading && mitras.length > 0 && (
-          <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50 rounded-b-3xl">
-            <div className="text-xs font-bold text-gray-500">
-              Menampilkan <span className="text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> hingga <span className="text-gray-900">{Math.min(currentPage * itemsPerPage, mitras.length)}</span> dari <span className="text-gray-900">{mitras.length}</span> entri
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition">
-                <i className="fa-solid fa-chevron-left text-xs"></i>
-              </button>
-              <div className="text-xs font-bold px-3 py-1 bg-white border border-gray-200 rounded-lg">{currentPage} / {totalPages}</div>
-              <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition">
-                <i className="fa-solid fa-chevron-right text-xs"></i>
-              </button>
-            </div>
+    <>
+      <div className="p-4 md:p-8 animate-fade-in-up relative">
+        
+        {toast.show && (
+          <div className={`fixed top-6 right-6 z-9999 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-fade-in-up transition-colors ${
+            toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-50 text-red-600 border border-red-100'
+          }`}>
+            <i className={`fa-solid ${toast.type === 'success' ? 'fa-circle-check text-brand-gold' : 'fa-triangle-exclamation'} text-xl`}></i>
+            <span className="font-bold text-sm">{toast.msg}</span>
           </div>
         )}
+        
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-black text-gray-900">Manajemen Mitra (WebGIS)</h1>
+              <p className="text-gray-500 font-medium">Kelola jaringan Mitra dan koordinat peta WebGIS.</p>
+            </div>
+            <button onClick={() => openModal()} className="bg-brand-gold hover:bg-yellow-500 text-gray-900 px-6 py-3 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
+              <i className="fa-solid fa-plus"></i> Tambah Mitra
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-50 text-gray-600 rounded-xl flex items-center justify-center text-xl"><i className="fa-solid fa-users"></i></div>
+              <div><p className="text-xs font-bold text-gray-400 uppercase">Total Mitra</p><p className="text-2xl font-black text-gray-900">{mitras.length}</p></div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center text-xl"><i className="fa-solid fa-crown"></i></div>
+              <div><p className="text-xs font-bold text-gray-400 uppercase">Distributor</p><p className="text-2xl font-black text-gray-900">{mitras.filter(m => m.level === 'Distributor').length}</p></div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl"><i className="fa-solid fa-store"></i></div>
+              <div><p className="text-xs font-bold text-gray-400 uppercase">Agen</p><p className="text-2xl font-black text-gray-900">{mitras.filter(m => m.level === 'Agen').length}</p></div>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl"><i className="fa-solid fa-handshake"></i></div>
+              <div><p className="text-xs font-bold text-gray-400 uppercase">Reseller</p><p className="text-2xl font-black text-gray-900">{mitras.filter(m => m.level === 'Reseller').length}</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-200 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-gray-800 bg-gray-900 flex justify-end">
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Filter Level:</label>
+              <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)} className="border border-gray-700 rounded-lg px-4 py-2 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-brand-gold cursor-pointer bg-gray-800">
+                <option value="Semua">Semua Level</option>
+                <option value="Distributor">Distributor</option>
+                <option value="Agen">Agen</option>
+                <option value="Reseller">Reseller</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-900 border-b border-gray-800 text-gray-300 font-bold tracking-widest uppercase text-[10px]">
+                <tr>
+                  <th className="px-6 py-4 w-16 text-center border-x border-gray-800">No</th>
+                  <th className="px-6 py-4 border-x border-gray-800">Toko & Pemilik</th>
+                  <th className="px-6 py-4 border-x border-gray-800">Level</th>
+                  <th className="px-6 py-4 border-x border-gray-800">Wilayah & Koordinat</th>
+                  <th className="px-6 py-4 text-center w-28 border-x border-gray-800">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 font-medium text-sm bg-white">
+                {isLoading ? (
+                  <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold animate-pulse border-x border-gray-100">Memuat Data dari Database...</td></tr>
+                ) : currentData.length === 0 ? (
+                  <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold italic border-x border-gray-100">Belum ada data mitra.</td></tr>
+                ) : (
+                  currentData.map((m, idx) => (
+                    <tr key={m.id} className="hover:bg-blue-50/10 transition">
+                      <td className="px-6 py-4 text-center text-gray-400 font-bold border-x border-gray-100">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                      <td className="px-6 py-4 border-x border-gray-100">
+                        <div className="font-bold text-gray-900 max-w-50 truncate" title={m.nama_toko}>{m.nama_toko}</div>
+                        <div className="text-xs text-gray-500 mt-0.5 truncate max-w-50" title={m.pemilik}><i className="fa-solid fa-user text-[10px] mr-1"></i>{m.pemilik}</div>
+                      </td>
+                      <td className="px-6 py-4 border-x border-gray-100">
+                        <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded-md border ${m.level === 'Distributor' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : m.level === 'Agen' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'}`}>{m.level}</span>
+                      </td>
+                      <td className="px-6 py-4 border-x border-gray-100">
+                        <div className="font-bold text-gray-700"><i className="fa-solid fa-map-pin text-red-500 mr-1"></i> {m.kota || 'Belum diatur'}</div>
+                        <div className="text-[10px] text-gray-400 font-mono mt-1 bg-gray-50 inline-block px-1.5 py-0.5 rounded border border-gray-200">{m.lat}, {m.lng}</div>
+                      </td>
+                      <td className="px-6 py-4 border-x border-gray-100">
+                        <div className="flex justify-center gap-2">
+                          <button onClick={() => openModal(m)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition flex items-center justify-center" title="Edit"><i className="fa-solid fa-pen text-xs"></i></button>
+                          <button onClick={() => handleDelete(m.id)} className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition flex items-center justify-center" title="Hapus"><i className="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {!isLoading && mitras.length > 0 && (
+            <div className="p-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-900">
+              <div className="text-xs font-bold text-gray-400">
+                Menampilkan <span className="text-white">{(currentPage - 1) * itemsPerPage + 1}</span> hingga <span className="text-white">{Math.min(currentPage * itemsPerPage, mitras.length)}</span> dari <span className="text-white">{mitras.length}</span> entri
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white disabled:opacity-50 transition"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                <div className="text-xs font-bold px-3 py-1 bg-gray-800 border border-gray-700 text-white rounded-lg">{currentPage} / {totalPages}</div>
+                <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white disabled:opacity-50 transition"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* MODAL FORM TAMBAH/EDIT (FIXED SCROLLING & TAILWIND) */}
+      {/* MODAL FULL SCREEN */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/70 backdrop-blur-sm p-4 sm:p-6">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col animate-fade-in-up overflow-hidden">
-            
-            {/* Modal Header */}
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(17, 24, 39, 0.8)', backdropFilter: 'blur(8px)' }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col animate-zoom-in overflow-hidden relative">
             <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
               <h2 className="text-xl font-black text-gray-900">{isEditing ? 'Edit Data Mitra' : 'Tambah Mitra Baru'}</h2>
               <button type="button" onClick={() => setIsModalOpen(false)} className="w-8 h-8 bg-gray-200 hover:bg-red-100 text-gray-500 hover:text-red-500 rounded-full flex items-center justify-center transition-colors">
@@ -255,11 +297,8 @@ export default function AdminMitraPage() {
               </button>
             </div>
             
-            {/* Modal Body (Scrollable) */}
             <div className="p-6 overflow-y-auto hide-scrollbar flex-1 bg-white">
               <form id="mitraForm" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
-                {/* KIRI: TEKS */}
                 <div className="lg:col-span-5 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
@@ -274,7 +313,6 @@ export default function AdminMitraPage() {
                     </div>
                     <div className="col-span-2 md:col-span-1">
                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Level Mitra</label>
-                      {/* Fix Error TS Types: as "Distributor" | "Agen" | "Reseller" */}
                       <select required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus:ring-2 focus:ring-brand-gold outline-none font-bold text-sm"
                         value={formData.level || 'Reseller'} onChange={e => setFormData({...formData, level: e.target.value as 'Distributor' | 'Agen' | 'Reseller'})}>
                         <option value="Distributor">Distributor</option>
@@ -305,8 +343,23 @@ export default function AdminMitraPage() {
                   </div>
                 </div>
 
-                {/* KANAN: MAP (Fix Class min-h-75) */}
                 <div className="lg:col-span-7 flex flex-col space-y-4">
+                  {/* FITUR BARU: Ekstraktor Kordinat & Geocoding Cerdas */}
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl shadow-inner">
+                    <label className="text-[10px] font-bold text-blue-700 uppercase mb-2 flex items-center justify-between">
+                      <span><i className="fa-solid fa-wand-magic-sparkles mr-1"></i> Auto-Isi dari G-Maps</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      onChange={handleExtractLocation}
+                      placeholder="Paste Link Maps (opsional) atau koordinat: -6.4024, 106.7942"
+                      className="w-full px-4 py-2.5 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none text-sm font-mono text-gray-700 shadow-sm" 
+                    />
+                    <p className="text-[9px] text-blue-600 mt-2 font-medium bg-blue-100/50 p-2 rounded-lg border border-blue-100">
+                      * Sistem akan <b>Otomatis</b> mengisi Kecamatan, Kota, Provinsi, dan Alamat Lengkap berdasarkan titik koordinat yang diketik/ditemukan.
+                    </p>
+                  </div>
+
                   <div className="flex-1 min-h-75 border-2 border-gray-200 rounded-2xl overflow-hidden bg-gray-100 relative">
                     <MapPicker 
                       lat={formData.lat || 0} 
@@ -315,6 +368,7 @@ export default function AdminMitraPage() {
                       setLng={(val) => setFormData(prev => ({...prev, lng: val}))}
                     />
                   </div>
+                  
                   <div className="grid grid-cols-2 gap-4 shrink-0">
                     <div>
                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Latitude</label>
@@ -328,11 +382,9 @@ export default function AdminMitraPage() {
                     </div>
                   </div>
                 </div>
-
               </form>
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-gray-100 shrink-0 bg-gray-50 flex justify-end gap-3">
               <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-bold text-gray-500 hover:text-gray-900 transition">Batal</button>
               <button type="submit" form="mitraForm" disabled={isPending} className="px-8 py-3 bg-gray-900 text-white font-black rounded-xl hover:bg-brand-gold hover:text-gray-900 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50">
@@ -343,7 +395,6 @@ export default function AdminMitraPage() {
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 }

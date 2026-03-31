@@ -5,14 +5,35 @@ interface LeadModalProps {
   isOpen: boolean;
   onClose: () => void;
   sourceContext?: string; 
+  mitraId?: string | number | null; 
 }
 
-const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, sourceContext = "Pertanyaan Umum" }) => {
+const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, sourceContext = "Pertanyaan Umum", mitraId = null }) => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     message: ''
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // FIX LINTER 1: Menggunakan setTimeout agar perubahan state berjalan asinkron tanpa menyebabkan render berantai
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedName = localStorage.getItem('qodha_lead_name');
+      const savedPhone = localStorage.getItem('qodha_lead_phone');
+      
+      if (savedName || savedPhone) {
+        setTimeout(() => {
+          setFormData(prev => ({
+            ...prev,
+            name: savedName || '',
+            phone: savedPhone || ''
+          }));
+        }, 0);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,17 +46,40 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, sourceContext = 
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
+    localStorage.setItem('qodha_lead_name', formData.name);
+    localStorage.setItem('qodha_lead_phone', formData.phone);
+
+    try {
+      await fetch('/api/prospek', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama_prospek: formData.name,
+          no_whatsapp: formData.phone,
+          sumber_halaman: window.location.pathname === '/' ? 'Beranda' : window.location.pathname,
+          id_mitra_target: mitraId,
+          konteks_pesan: `${sourceContext} | Pesan: ${formData.message}`
+        })
+      });
+    } catch (err) {
+      console.error("Sistem CRM Gagal Mencatat:", err);
+    }
     
     const waNumber = "6281717302223"; 
     const text = `Halo Admin Qodha!%0A%0ASaya *${formData.name}*.%0A%0ASaya tertarik dengan info: *${sourceContext}*.%0A%0APesan / Pertanyaan:%0A${formData.message}%0A%0AMohon info lebih lanjut. Terima kasih!`;
     
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
+    
+    setIsSubmitting(false); 
     onClose();
   };
 
   return (
+    // FIX LINTER 2: z-[100] diubah menjadi z-100
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
@@ -108,10 +152,14 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, sourceContext = 
           <div className="pt-2">
             <button 
               type="submit" 
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-gray-900/20 flex items-center justify-center gap-2 group"
+              disabled={isSubmitting}
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-gray-900/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Kirim via WhatsApp 
-              <i className="fa-brands fa-whatsapp text-green-400 text-lg group-hover:scale-110 transition-transform"></i>
+              {isSubmitting ? (
+                <><i className="fa-solid fa-circle-notch fa-spin"></i> Memproses...</>
+              ) : (
+                <>Kirim via WhatsApp <i className="fa-brands fa-whatsapp text-green-400 text-lg group-hover:scale-110 transition-transform"></i></>
+              )}
             </button>
             <p className="text-[10px] text-center text-gray-400 mt-3 font-medium">
               Data Anda aman dan hanya digunakan untuk keperluan komunikasi terkait Qodha.

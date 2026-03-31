@@ -3,11 +3,10 @@ import { Inter } from 'next/font/google';
 import pool from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
 import Link from 'next/link';
+import RealtimeHeader from './RealtimeHeader'; // <-- IMPORT KOMPONEN JAM BARU KITA
 
-// Mengimpor font Inter khusus untuk data dan paragraf
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
-// Membuat "KTP" resmi untuk TypeScript agar terbebas dari tipe 'any'
 interface ProdukPopuler {
   nama_produk: string;
   klik: number;
@@ -16,32 +15,28 @@ interface ProdukPopuler {
 }
 
 export default async function AdminDashboard() {
-  // FUNGSI WAKTU (Pagi/Siang/Sore/Malam)
-  const hour = new Date().getHours();
-  let greeting = 'Selamat Malam';
-  if (hour >= 5 && hour < 11) greeting = 'Selamat Pagi';
-  else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
-  else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
-
   // VARIABEL STATISTIK
   let totalProduk = 0;
   let totalMitra = 0;
   let totalKlikProduk = 0;
-  let totalKlikMitra = 0;
+  let totalProspek = 0; 
   
-  // Menerapkan interface ProdukPopuler di sini
   let produkTerpopuler: ProdukPopuler[] = [];
 
   try {
-    // Menghitung Total Produk
     const [prodRes] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as total FROM tb_produk');
     totalProduk = Number(prodRes[0]?.total || 0);
 
-    // Menghitung Total Mitra
     const [mitraRes] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as total FROM tb_mitra');
     totalMitra = Number(mitraRes[0]?.total || 0);
 
-    // AUTO-ADAPT: Mengambil total klik
+    try {
+      const [prospekRes] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) as total FROM tb_leads_prospek');
+      totalProspek = Number(prospekRes[0]?.total || 0);
+    } catch {
+      totalProspek = 0; 
+    }
+
     try {
       const [klikProdRes] = await pool.query<RowDataPacket[]>('SELECT SUM(klik) as total FROM tb_produk');
       totalKlikProduk = Number(klikProdRes[0]?.total || 1240); 
@@ -49,9 +44,7 @@ export default async function AdminDashboard() {
       const [topProdRes] = await pool.query<RowDataPacket[]>('SELECT nama_produk, klik, harga, foto_produk FROM tb_produk ORDER BY klik DESC LIMIT 4');
       produkTerpopuler = topProdRes as ProdukPopuler[];
     } catch {
-      // Dummy data cantik jika tabel analitik belum ada
       totalKlikProduk = 3842;
-      totalKlikMitra = 856;
       produkTerpopuler = [
         { nama_produk: 'Parfum Kasturi Kijang', klik: 1240, harga: 150000, foto_produk: '' },
         { nama_produk: 'Misk Thaharah', klik: 890, harga: 75000, foto_produk: '' },
@@ -64,29 +57,14 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <div className="animate-fade-in-up pb-10">
+    <div className="animate-fade-in-up pb-4"> {/* pb dikurangi karena footer ada di wrapper */}
       
-      {/* HEADER DASHBOARD */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-        <div>
-          <p className="text-brand-gold font-bold text-sm tracking-widest uppercase mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-sparkles"></i> Ringkasan Sistem
-          </p>
-          <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-            {greeting}, 
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-gray-900 to-gray-500 ml-2">Admin Qodha!</span>
-          </h1>
-        </div>
-        <div className="bg-white px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className={`${inter.className} text-sm font-semibold text-gray-600`}>Sistem Live & Optimal</span>
-        </div>
-      </div>
+      {/* HEADER REAL-TIME DIPANGGIL DI SINI */}
+      <RealtimeHeader />
 
       {/* BENTO GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         
-        {/* Card 1 */}
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
           <div className="relative z-10">
@@ -98,7 +76,6 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Card 2 */}
         <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
           <div className="relative z-10">
@@ -110,7 +87,6 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Card 3 */}
         <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-3xl p-6 border border-gray-800 shadow-xl relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
           <div className="relative z-10">
@@ -122,15 +98,14 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Card 4 */}
         <div className="bg-linear-to-br from-brand-gold to-amber-500 rounded-3xl p-6 border border-amber-400 shadow-xl shadow-amber-500/20 relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/20 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
           <div className="relative z-10">
             <div className="w-12 h-12 bg-white/20 text-gray-900 border border-white/30 rounded-2xl flex items-center justify-center text-xl mb-4 backdrop-blur-sm">
-              <i className="fa-solid fa-map-location-dot"></i>
+              <i className="fa-solid fa-users-viewfinder"></i>
             </div>
-            <p className={`${inter.className} text-amber-900 font-bold text-sm mb-1`}>Pencarian Mitra</p>
-            <h2 className="text-3xl font-black text-gray-900">{(totalKlikMitra || 0).toLocaleString('id-ID')} <span className="text-sm text-amber-800 font-bold tracking-widest uppercase">+Leads</span></h2>
+            <p className={`${inter.className} text-amber-900 font-bold text-sm mb-1`}>Data Prospek Masuk</p>
+            <h2 className="text-3xl font-black text-gray-900">{totalProspek} <span className="text-sm text-amber-800 font-bold tracking-widest uppercase">+Leads</span></h2>
           </div>
         </div>
 
@@ -158,13 +133,11 @@ export default async function AdminDashboard() {
                 <div key={index} className="flex items-center gap-4">
                   <div className="w-8 font-black text-gray-300 text-xl text-right">0{index + 1}</div>
                   <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
-                    {/* Menyuruh ESLint untuk diam khusus di baris ini */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={prod.foto_produk ? `/uploads/produk/${prod.foto_produk}` : '/placeholder-product.png'} 
                       alt={prod.nama_produk} 
                       className="w-full h-full object-cover"
-                      /* ATRIBUT ONERROR DIHAPUS DARI SINI KARENA DILARANG DI SERVER COMPONENT */
                     />
                   </div>
                   <div className="flex-1">
@@ -199,6 +172,11 @@ export default async function AdminDashboard() {
               <Link href="/admin/mitra" className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50 hover:bg-emerald-500/10 border border-gray-100 hover:border-emerald-500 transition-all text-center group">
                 <i className="fa-solid fa-map-pin text-xl text-gray-400 group-hover:text-emerald-500 mb-2 transition-colors"></i>
                 <span className={`${inter.className} text-xs font-bold text-gray-700`}>Pin<br/>Mitra Baru</span>
+              </Link>
+              
+              <Link href="/admin/prospek" className="col-span-2 flex items-center justify-center p-4 rounded-2xl bg-gray-900 hover:bg-gray-800 border border-gray-800 transition-all text-center group">
+                <i className="fa-solid fa-address-book text-brand-gold mr-3 text-lg group-hover:scale-110 transition-transform"></i>
+                <span className={`${inter.className} text-sm font-bold text-white`}>Follow Up Prospek CRM</span>
               </Link>
             </div>
           </div>
