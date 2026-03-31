@@ -36,29 +36,24 @@ const normalizeCityName = (name: string | undefined) => {
     .trim(); 
 };
 
-// 1. KONTROL ZOOM
 function MapEventController({ setZoomLevel }: { setZoomLevel: (z: number) => void }) {
   const map = useMapEvents({
-    zoomend: () => {
-      setZoomLevel(map.getZoom());
-    },
+    zoomend: () => setZoomLevel(map.getZoom()),
   });
   return null;
 }
 
-// 2. FUNGSI PENYELAMAT UKURAN
+// FIX CRITICAL LEAFLET: Meresize otomatis beberapa kali saat komponen dimuat
 function MapResizer() {
   const map = useMap();
   useEffect(() => {
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 500);
-    
+    // Trik tembak paksa agar ukuran tidak pernah 0
+    const timeouts = [100, 500, 1000].map(ms => setTimeout(() => map.invalidateSize(), ms));
     const handleResize = () => map.invalidateSize();
     window.addEventListener('resize', handleResize);
     
     return () => {
-      clearTimeout(timer);
+      timeouts.forEach(clearTimeout);
       window.removeEventListener('resize', handleResize);
     }
   }, [map]);
@@ -79,9 +74,12 @@ export default function MapView({
 
   useEffect(() => {
     fetch('/assets/geojson/batas_kabupaten.geojson')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Gagal load GeoJSON");
+        return res.json();
+      })
       .then((data: GeoJsonData) => setGeoJsonData(data))
-      .catch((err) => console.error("Gagal memuat GeoJSON:", err));
+      .catch((err) => console.error("GeoJSON Error:", err));
   }, []);
 
   const cityMitraCounts = useMemo(() => {
@@ -107,17 +105,10 @@ export default function MapView({
       if (mitraCount > 10) fillColor = '#10b981'; 
       else if (mitraCount > 3) fillColor = '#fbbf24'; 
       else fillColor = '#3b82f6'; 
-      
       fillOpacity = zoomLevel > 11 ? 0.15 : 0.6; 
     }
 
-    return {
-      fillColor,
-      weight: 1.5,
-      opacity: zoomLevel > 11 ? 0.3 : 1, 
-      color: '#ffffff', 
-      fillOpacity
-    };
+    return { fillColor, weight: 1.5, opacity: zoomLevel > 11 ? 0.3 : 1, color: '#ffffff', fillOpacity };
   };
 
   const createNumberedIcon = (num: number, level: string, isActive: boolean) => {
@@ -125,7 +116,6 @@ export default function MapView({
     if (level === 'Distributor') colorClass = 'bg-yellow-500 text-gray-900';
     if (level === 'Agen') colorClass = 'bg-emerald-500 text-white';
     if (level === 'Reseller') colorClass = 'bg-blue-500 text-white';
-
     const activeRing = isActive ? 'ring-4 ring-red-500 scale-125 z-50' : '';
 
     return L.divIcon({
@@ -137,17 +127,16 @@ export default function MapView({
   };
 
   return (
-    <div className="flex-1 min-w-0 w-full h-[50dvh] md:h-auto md:self-stretch bg-gray-200 relative z-10">
+    // PETA SEPENUHNYA DIAMANATKAN PADA SISA RUANG FLEKSIBEL (Tanpa Tinggi Spesifik dVH)
+    <div className="flex-1 relative w-full h-full bg-gray-200 z-10 overflow-hidden">
       
+      {/* Memaksa elemen Leaflet menempel pada bingkai */}
       <div className="absolute inset-0">
-        {/* FIX PERFORMANCE: Menambahkan preferCanvas={true} agar rendering super cepat */}
         <MapContainer 
           center={[mapCenter.lat, mapCenter.lng]} 
           zoom={zoomLevel} 
-          preferCanvas={true} 
-          style={{ height: '100%', width: '100%', zIndex: 10 }}
+          className="w-full h-full z-10" // Pakai class w-full h-full ketimbang inline style
         >
-          
           <MapResizer />
           <MapEventController setZoomLevel={setZoomLevel} />
 
@@ -201,12 +190,8 @@ export default function MapView({
                       </span>
                       <h4 className="font-bold text-gray-900 mb-1 leading-tight">{mitra.nama_toko}</h4>
                       {mitra.distance && <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">{mitra.distance.toFixed(2)} KM dari Anda</p>}
-                      
                       <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          triggerContactModal(mitra, mitra.distance);
-                        }} 
+                        onClick={(e) => { e.stopPropagation(); triggerContactModal(mitra, mitra.distance); }} 
                         className="w-full text-xs bg-gray-900 text-white px-3 py-2.5 rounded-lg font-bold hover:bg-brand-gold hover:text-gray-900 transition-colors block mt-2"
                       >
                         Hubungi Pusat
@@ -230,7 +215,8 @@ export default function MapView({
         </MapContainer>
       </div>
 
-      <div className="absolute bottom-4 right-4 z-9999 flex flex-col gap-2 pointer-events-none items-end">
+      {/* LEGENDA AMAN DARI SCROLL TERSEMBUNYI */}
+      <div className="absolute bottom-8 right-4 z-1000 flex flex-col gap-2 pointer-events-none items-end">
         {zoomLevel < 12 && (
           <div className="bg-white/90 backdrop-blur px-3 py-2 rounded-xl shadow-md border border-gray-100 flex flex-col gap-1 text-[10px] font-bold text-gray-600">
             <p className="text-gray-800 border-b border-gray-200 pb-1 mb-1">Kepadatan Area</p>
@@ -240,7 +226,7 @@ export default function MapView({
           </div>
         )}
         <div className="bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-500 border border-white shadow-md">
-          &copy; {new Date().getFullYear()} Qodha Aromatic GIS Data
+          &copy; {new Date().getFullYear()} Qodha Aromatic GIS
         </div>
       </div>
     </div>

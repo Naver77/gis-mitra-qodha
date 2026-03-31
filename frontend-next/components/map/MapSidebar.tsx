@@ -40,13 +40,11 @@ export default function MapSidebar({
     : null;
 
   return (
-    // FIX CSS: 'md:h-full' diganti jadi 'md:h-auto md:self-stretch' & ditambah 'overflow-hidden'
-    // Ini memastikan Sidebar tidak membocorkan ukurannya dan merusak kalkulasi Leaflet di sebelahnya.
-    <div className="w-full md:w-87.5 lg:w-100 shrink-0 h-[50dvh] md:h-auto md:self-stretch flex flex-col bg-white shadow-2xl z-20 border-r border-gray-100 relative transition-all overflow-hidden">
+    // FIX SIDEBAR: Pastikan hanya mengisi sisa ruang secara vertikal 'h-full flex flex-col' tanpa batas view height tetap.
+    <div className="w-full md:w-87.5 lg:w-100 shrink-0 h-1/2 md:h-full flex flex-col bg-white shadow-2xl z-20 border-r border-gray-100 relative transition-all overflow-hidden">
       
       {/* HEADER SIDEBAR */}
       <div className="p-4 md:p-5 border-b border-gray-100 bg-white/95 backdrop-blur z-10 shrink-0">
-        
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
             <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight">📍 Lokasi Mitra</h1>
@@ -58,10 +56,6 @@ export default function MapSidebar({
               <i className="fa-solid fa-circle-info text-sm"></i>
             </button>
           </div>
-          
-          <button className="md:hidden w-8 h-8 flex items-center justify-center bg-gray-50 rounded-full text-gray-400 hover:text-red-500 transition-colors">
-            <i className="fa-solid fa-chevron-down"></i>
-          </button>
         </div>
 
         <div className="space-y-3">
@@ -125,20 +119,19 @@ export default function MapSidebar({
         </div>
       </div>
 
-      {/* AREA KONTEN (DINAMIS: LIST ATAU DETAIL) */}
+      {/* AREA KONTEN: Di sinilah letak 'overflow-y-auto' sehingga HANYA area ini yang bisa di-scroll */}
       {selectedMitra ? (
         
-        // --- A. TAMPILAN DETAIL MITRA ---
         <div className="flex-1 overflow-y-auto p-4 md:p-5 bg-gray-50/50 hide-scrollbar flex flex-col animate-fade-in-up">
           
           <button 
             onClick={() => handlePartnerClick('')} 
-            className="mb-4 text-xs font-bold text-gray-500 hover:text-gray-900 transition flex items-center gap-2 w-fit px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm"
+            className="mb-4 text-xs font-bold text-gray-500 hover:text-gray-900 transition flex items-center gap-2 w-fit px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm shrink-0"
           >
             <i className="fa-solid fa-arrow-left"></i> Kembali ke Daftar
           </button>
 
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex-1 flex flex-col relative">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex-1 flex flex-col relative shrink-0">
             <div className="h-32 bg-gray-200 relative shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
@@ -154,7 +147,7 @@ export default function MapSidebar({
               </div>
             </div>
 
-            <div className="p-5 flex flex-col flex-1">
+            <div className="p-5 flex flex-col flex-1 shrink-0">
                <h2 className="text-xl font-extrabold text-gray-900 mb-2 leading-tight">{selectedMitra.nama_toko}</h2>
                
                <div className="flex flex-wrap items-center gap-2 text-xs mb-5">
@@ -194,7 +187,6 @@ export default function MapSidebar({
 
       ) : (
 
-        // --- B. TAMPILAN DAFTAR MITRA ---
         <div className="flex-1 overflow-y-auto p-4 md:p-5 bg-gray-50/50 hide-scrollbar space-y-3">
           <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 px-1">
             {processedMitra.length} Mitra Ditemukan {activeRadius > 0 && userLoc ? `dalam ${activeRadius} KM` : ''}
@@ -220,7 +212,7 @@ export default function MapSidebar({
                   {index + 1}
                 </div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 shrink-0">
                   <h4 className="font-extrabold text-sm leading-tight mb-1 text-gray-900 group-hover:text-brand-gold transition-colors truncate">
                     {mitra.nama_toko}
                   </h4>

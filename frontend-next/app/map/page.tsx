@@ -2,12 +2,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
-// Import Komponen & Utilities Modular
 import LeadModal from '@/components/LeadModal';
 import MapSidebar from '@/components/map/MapSidebar';
-import { Mitra, mockMitra, calculateHaversineDistance } from '@/lib/geo-utils';
+import { Mitra, calculateHaversineDistance } from '@/lib/geo-utils';
 
-// IMPORT DINAMIS: Mencegah error 'window is not defined' saat render Leaflet di Next.js SSR
 const MapView = dynamic(() => import('@/components/map/MapView'), { 
   ssr: false,
   loading: () => (
@@ -17,26 +15,66 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
   )
 });
 
+interface RawMitraData {
+  id?: string | number;
+  id_mitra?: string | number;
+  nama_toko?: string;
+  nama?: string;
+  level?: 'Distributor' | 'Agen' | 'Reseller';
+  jenis_mitra?: string;
+  kecamatan?: string;
+  kota?: string;
+  alamat_lengkap?: string;
+  alamat?: string;
+  lat?: string | number;
+  latitude?: string | number;
+  lng?: string | number;
+  longitude?: string | number;
+  no_hp?: string;
+  no_whatsapp?: string;
+}
+
 export default function PetaKemitraanPage() {
-  // State Utama Data
-  const [mitraList] = useState<Mitra[]>(mockMitra);
+  const [mitraList, setMitraList] = useState<Mitra[]>([]);
   const [userLoc, setUserLoc] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -6.200, lng: 106.816}); 
   
-  // State Pencarian & Filter
   const [activeLevel, setActiveLevel] = useState<string>('Semua');
   const [activeRadius, setActiveRadius] = useState<number>(0); 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingLoc, setIsSearchingLoc] = useState(false);
   
-  // State UI & Interaksi
   const [showGuide, setShowGuide] = useState(false);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [leadContext, setLeadContext] = useState('');
 
-  // 1. Eksekusi GPS Otomatis saat pertama kali buka
   useEffect(() => {
+    const fetchMitraFromDB = async () => {
+      try {
+        const res = await fetch('/api/mitra');
+        const data = await res.json();
+        
+        if (Array.isArray(data)) {
+          const mappedData: Mitra[] = data.map((m: RawMitraData) => ({
+            id: String(m.id || m.id_mitra),
+            nama_toko: m.nama_toko || m.nama || 'Tanpa Nama',
+            level: (m.level || m.jenis_mitra || 'Reseller') as 'Distributor' | 'Agen' | 'Reseller',
+            kecamatan: m.kecamatan || m.kota || '',
+            alamat_lengkap: m.alamat_lengkap || m.alamat || '',
+            lat: Number(m.lat || m.latitude || 0),
+            lng: Number(m.lng || m.longitude || 0),
+            no_wa: String(m.no_hp || m.no_whatsapp || '6281717302223')
+          }));
+          setMitraList(mappedData);
+        }
+      } catch (err) {
+        console.error("Gagal load data mitra asli:", err);
+      }
+    };
+    
+    fetchMitraFromDB();
+
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -48,14 +86,16 @@ export default function PetaKemitraanPage() {
     }
   }, []);
 
-  // 2. Logika Geocoding (Ubah Teks Kecamatan Jadi Koordinat)
   const handleSmartSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery) return;
     
     setIsSearchingLoc(true);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}, Indonesia`);
+      const safeQuery = encodeURIComponent(`${searchQuery}, Indonesia`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${safeQuery}`);
+      if (!res.ok) throw new Error("Server satelit menolak permintaan.");
+
       const data = await res.json();
       if (data && data.length > 0) {
         const newLat = parseFloat(data[0].lat);
@@ -66,13 +106,13 @@ export default function PetaKemitraanPage() {
         alert("Lokasi tidak ditemukan. Coba nama kecamatan/kota yang lebih spesifik.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Geocoding Fetch Error:", err);
+      alert("Gagal mencari lokasi. Pastikan koneksi internet stabil.");
     } finally {
       setIsSearchingLoc(false);
     }
   };
 
-  // 3. Logika Filtering & Perhitungan Haversine Jarak
   const processedMitra = useMemo(() => {
     let filtered = [...mitraList];
 
@@ -99,10 +139,7 @@ export default function PetaKemitraanPage() {
     return withDistance;
   }, [mitraList, activeLevel, activeRadius, userLoc]);
 
-  // Handler Interaksi
-  const handlePartnerClick = (id: string) => {
-    setActiveMarker(id);
-  };
+  const handlePartnerClick = (id: string) => setActiveMarker(id);
 
   const triggerContactModal = (mitra: Mitra, distance?: number) => {
     const distText = distance ? ` (${distance.toFixed(1)} KM)` : '';
@@ -110,11 +147,10 @@ export default function PetaKemitraanPage() {
     setIsLeadModalOpen(true);
   };
 
-  // Tampilan Panduan Layar Penuh
   if (showGuide) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-21.25 px-4 pb-20">
-        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8 md:p-12 animate-fade-in-up border border-gray-100">
+      <div className="fixed inset-0 z-9999 bg-gray-50 overflow-y-auto pt-21.25 px-4 pb-20">
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8 md:p-12 animate-fade-in-up border border-gray-100 mt-4">
           <div className="flex justify-between items-start mb-8 border-b pb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">Panduan Sistem Kemitraan</h1>
@@ -146,16 +182,6 @@ export default function PetaKemitraanPage() {
                 </div>
               </div>
             </section>
-
-            <section>
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><i className="fa-solid fa-location-crosshairs text-brand-gold"></i> Cara Menggunakan Peta</h3>
-              <ul className="space-y-4 list-none text-gray-600">
-                <li className="flex gap-3"><span className="font-black text-brand-gold">1.</span> <strong>Aktifkan GPS:</strong> Izinkan browser mengakses lokasi Anda agar sistem otomatis menampilkan jarak mitra terdekat.</li>
-                <li className="flex gap-3"><span className="font-black text-brand-gold">2.</span> <strong>Gunakan Pencarian:</strong> Jika GPS mati, ketik nama Kecamatan, Kelurahan, atau Provinsi Anda di kolom pencarian. Sistem pintar kami akan mengubah teks menjadi titik koordinat.</li>
-                <li className="flex gap-3"><span className="font-black text-brand-gold">3.</span> <strong>Filter Radius:</strong> Pilih opsi 5km, 10km, atau 15km untuk mengerucutkan jangkauan lokasi mitra dari titik Anda.</li>
-                <li className="flex gap-3"><span className="font-black text-brand-gold">4.</span> <strong>Penomoran Peta:</strong> Angka 1 pada peta dan daftar (list) menunjukkan mitra dengan jarak garis lurus terdekat dari lokasi Anda saat ini.</li>
-              </ul>
-            </section>
           </div>
           
           <button onClick={() => setShowGuide(false)} className="mt-10 w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-brand-gold hover:text-gray-900 transition-colors">
@@ -166,9 +192,10 @@ export default function PetaKemitraanPage() {
     );
   }
 
-  // TAMPILAN UTAMA (Sidebar Kiri & Peta Kanan)
   return (
-    <div className="flex-1 w-full flex flex-col md:flex-row overflow-hidden bg-white z-40 relative h-[calc(100dvh-70px)] md:h-[calc(100dvh-85px)]">
+    // FIX SUPER CRITICAL: Menggunakan 'fixed' di bawah navbar (asumsi tinggi navbar ~80px). 
+    // Ini mengunci container ke layar. Halaman UTAMA TIDAK AKAN BISA DI SCROLL LAGI!
+    <div className="fixed top-17.5 md:top-21.25 bottom-0 left-0 right-0 flex flex-col md:flex-row bg-white z-40 overflow-hidden">
       
       <MapSidebar 
         processedMitra={processedMitra}
