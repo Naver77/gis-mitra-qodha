@@ -142,7 +142,7 @@ export default function KategoriPage() {
             <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold tracking-widest uppercase text-[10px]">
               <tr>
                 <th className="px-6 py-4 w-16 text-center">No</th>
-                <th className="px-6 py-4 w-24 text-center">ID DB</th>
+                <th className="px-6 py-4 w-24 text-center">ID</th>
                 <th className="px-6 py-4">Nama Kategori</th>
                 <th className="px-6 py-4 text-center w-28">Aksi</th>
               </tr>
