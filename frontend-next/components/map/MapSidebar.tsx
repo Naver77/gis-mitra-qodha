@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Mitra } from '@/lib/geo-utils';
 
 interface MapSidebarProps {
@@ -16,6 +16,9 @@ interface MapSidebarProps {
   triggerContactModal: (mitra: Mitra, distance?: number) => void;
   userLoc: { lat: number; lng: number } | null;
   setShowGuide: (show: boolean) => void;
+  // Props Tambahan untuk Custom UX Error
+  searchError?: string | null;
+  clearSearchError?: () => void;
 }
 
 export default function MapSidebar({
@@ -32,17 +35,42 @@ export default function MapSidebar({
   handlePartnerClick,
   triggerContactModal,
   userLoc,
-  setShowGuide
+  setShowGuide,
+  searchError,
+  clearSearchError
 }: MapSidebarProps) {
   
   const selectedMitra = activeMarker 
     ? processedMitra.find(m => String(m.id) === String(activeMarker)) 
     : null;
 
+  // Auto-dismiss Toast Notification setelah 4 detik
+  useEffect(() => {
+    if (searchError && clearSearchError) {
+      const timer = setTimeout(() => {
+        clearSearchError();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchError, clearSearchError]);
+
   return (
-    // FIX SIDEBAR: Pastikan hanya mengisi sisa ruang secara vertikal 'h-full flex flex-col' tanpa batas view height tetap.
     <div className="w-full md:w-87.5 lg:w-100 shrink-0 h-1/2 md:h-full flex flex-col bg-white shadow-2xl z-20 border-r border-gray-100 relative transition-all overflow-hidden">
       
+      {/* CUSTOM TOAST NOTIFICATION */}
+      {searchError && (
+        <div className="absolute top-4 left-4 right-4 z-50 bg-red-50 text-red-700 px-4 py-3 rounded-xl shadow-lg border border-red-200 flex items-start gap-3 animate-fade-in-down backdrop-blur-sm">
+          <i className="fa-solid fa-triangle-exclamation mt-1 text-red-500"></i>
+          <div className="flex-1">
+            <p className="text-sm font-bold leading-tight">Lokasi Tidak Ditemukan</p>
+            <p className="text-xs mt-0.5 text-red-600/80">{searchError}</p>
+          </div>
+          <button onClick={clearSearchError} className="text-red-400 hover:text-red-700 transition-colors">
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      )}
+
       {/* HEADER SIDEBAR */}
       <div className="p-4 md:p-5 border-b border-gray-100 bg-white/95 backdrop-blur z-10 shrink-0">
         <div className="flex justify-between items-center mb-4">
@@ -119,7 +147,7 @@ export default function MapSidebar({
         </div>
       </div>
 
-      {/* AREA KONTEN: Di sinilah letak 'overflow-y-auto' sehingga HANYA area ini yang bisa di-scroll */}
+      {/* AREA KONTEN */}
       {selectedMitra ? (
         
         <div className="flex-1 overflow-y-auto p-4 md:p-5 bg-gray-50/50 hide-scrollbar flex flex-col animate-fade-in-up">
@@ -193,9 +221,26 @@ export default function MapSidebar({
           </p>
 
           {processedMitra.length === 0 ? (
-            <div className="text-center py-10">
-              <i className="fa-solid fa-store-slash text-4xl text-gray-300 mb-3"></i>
-              <p className="text-sm text-gray-500 font-medium">Tidak ada mitra di area atau filter ini.</p>
+            /* UX PROFESIONAL: EMPTY STATE UI */
+            <div className="flex flex-col items-center justify-center h-56 px-6 text-center mt-6">
+              <div className="w-20 h-20 bg-white border border-gray-100 rounded-full flex items-center justify-center mb-5 shadow-sm">
+                <i className="fa-solid fa-map-location-dot text-3xl text-gray-300"></i>
+              </div>
+              <h4 className="text-sm font-extrabold text-gray-800 mb-2">Ups, 0 Mitra Ditemukan</h4>
+              <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                Belum ada mitra Qodha Aromatic di area pencarian Anda, atau filter radius terlalu kecil.
+              </p>
+              <button 
+                onClick={() => {
+                  setActiveRadius(0);
+                  setActiveLevel('Semua');
+                  setSearchQuery('');
+                  clearSearchError?.();
+                }}
+                className="text-xs font-bold bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-brand-gold hover:text-gray-900 transition-all shadow-md flex items-center gap-2"
+              >
+                <i className="fa-solid fa-rotate-right"></i> Reset Pencarian
+              </button>
             </div>
           ) : (
             processedMitra.map((mitra, index) => (

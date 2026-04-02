@@ -1,16 +1,19 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-
 import LeadModal from '@/components/LeadModal';
 import MapSidebar from '@/components/map/MapSidebar';
 import { Mitra, calculateHaversineDistance } from '@/lib/geo-utils';
 
+// Lazy loading komponen peta untuk optimasi performa Next.js
 const MapView = dynamic(() => import('@/components/map/MapView'), { 
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
+      <div className="flex flex-col items-center gap-3">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-gold"></div>
+        <p className="text-sm font-bold text-gray-500 animate-pulse">Memuat Peta Spasial...</p>
+      </div>
     </div>
   )
 });
@@ -35,20 +38,25 @@ interface RawMitraData {
 }
 
 export default function PetaKemitraanPage() {
+  // State Utama
   const [mitraList, setMitraList] = useState<Mitra[]>([]);
   const [userLoc, setUserLoc] = useState<{lat: number, lng: number} | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -6.200, lng: 106.816}); 
   
+  // State Filter & Pencarian
   const [activeLevel, setActiveLevel] = useState<string>('Semua');
   const [activeRadius, setActiveRadius] = useState<number>(0); 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchingLoc, setIsSearchingLoc] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null); // UX: State Error Custom
   
+  // State UI
   const [showGuide, setShowGuide] = useState(false);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [leadContext, setLeadContext] = useState('');
 
+  // 1. Ambil Data Mitra dari Database saat komponen dimuat
   useEffect(() => {
     const fetchMitraFromDB = async () => {
       try {
@@ -69,32 +77,36 @@ export default function PetaKemitraanPage() {
           setMitraList(mappedData);
         }
       } catch (err) {
-        console.error("Gagal load data mitra asli:", err);
+        console.error("Gagal memuat data mitra asli:", err);
       }
     };
     
     fetchMitraFromDB();
 
+    // Dapatkan lokasi GPS User (Jika diizinkan)
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLoc({ lat: position.coords.latitude, lng: position.coords.longitude });
           setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
         },
-        () => console.log("User menolak akses GPS.")
+        () => console.log("User menolak atau menonaktifkan akses GPS.")
       );
     }
   }, []);
 
+  // 2. Fungsi Pencarian Kota (Smart Geocoding dengan UX Error Handling)
   const handleSmartSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery) return;
+    if (!searchQuery.trim()) return;
     
     setIsSearchingLoc(true);
+    setSearchError(null); // Reset pesan error sebelum mencari
+
     try {
       const safeQuery = encodeURIComponent(`${searchQuery}, Indonesia`);
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${safeQuery}`);
-      if (!res.ok) throw new Error("Server satelit menolak permintaan.");
+      if (!res.ok) throw new Error("Server satelit Nominatim menolak permintaan.");
 
       const data = await res.json();
       if (data && data.length > 0) {
@@ -102,24 +114,30 @@ export default function PetaKemitraanPage() {
         const newLng = parseFloat(data[0].lon);
         setUserLoc({ lat: newLat, lng: newLng });
         setMapCenter({ lat: newLat, lng: newLng });
+        // Optional: setSearchQuery(data[0].display_name.split(',')[0]); // Auto koreksi nama
       } else {
-        alert("Lokasi tidak ditemukan. Coba nama kecamatan/kota yang lebih spesifik.");
+        // Memicu Custom Toast Error di Sidebar, bukan alert browser!
+        setSearchError(`Lokasi "${searchQuery}" tidak ditemukan. Coba periksa ejaan atau nama kota yang lebih spesifik.`);
       }
     } catch (err) {
       console.error("Geocoding Fetch Error:", err);
-      alert("Gagal mencari lokasi. Pastikan koneksi internet stabil.");
+      // Memicu Custom Toast Error
+      setSearchError("Gagal mencari lokasi. Pastikan koneksi internet Anda stabil dan coba lagi.");
     } finally {
       setIsSearchingLoc(false);
     }
   };
 
+  // 3. Kalkulasi Jarak Haversine & Filter (Zero Server Load)
   const processedMitra = useMemo(() => {
     let filtered = [...mitraList];
 
+    // Filter Level
     if (activeLevel !== 'Semua') {
       filtered = filtered.filter(m => m.level === activeLevel);
     }
 
+    // Kalkulasi Jarak untuk semua mitra yang tersisa
     let withDistance = filtered.map(m => {
       let distance = 0;
       if (userLoc) {
@@ -128,10 +146,12 @@ export default function PetaKemitraanPage() {
       return { ...m, distance };
     });
 
+    // Filter Radius Jika Aktif
     if (activeRadius > 0 && userLoc) {
       withDistance = withDistance.filter(m => m.distance <= activeRadius);
     }
 
+    // Urutkan dari yang Terdekat
     if (userLoc) {
       withDistance.sort((a, b) => a.distance - b.distance);
     }
@@ -139,6 +159,7 @@ export default function PetaKemitraanPage() {
     return withDistance;
   }, [mitraList, activeLevel, activeRadius, userLoc]);
 
+  // Handler Interaksi
   const handlePartnerClick = (id: string) => setActiveMarker(id);
 
   const triggerContactModal = (mitra: Mitra, distance?: number) => {
@@ -147,6 +168,7 @@ export default function PetaKemitraanPage() {
     setIsLeadModalOpen(true);
   };
 
+  // UI Panduan (Guide Overlay)
   if (showGuide) {
     return (
       <div className="fixed inset-0 z-9999 bg-gray-50 overflow-y-auto pt-21.25 px-4 pb-20">
@@ -184,7 +206,7 @@ export default function PetaKemitraanPage() {
             </section>
           </div>
           
-          <button onClick={() => setShowGuide(false)} className="mt-10 w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-brand-gold hover:text-gray-900 transition-colors">
+          <button onClick={() => setShowGuide(false)} className="mt-10 w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-brand-gold hover:text-gray-900 transition-colors shadow-md">
             Saya Mengerti, Kembali ke Peta
           </button>
         </div>
@@ -193,8 +215,7 @@ export default function PetaKemitraanPage() {
   }
 
   return (
-    // FIX SUPER CRITICAL: Menggunakan 'fixed' di bawah navbar (asumsi tinggi navbar ~80px). 
-    // Ini mengunci container ke layar. Halaman UTAMA TIDAK AKAN BISA DI SCROLL LAGI!
+    // FIX SUPER CRITICAL: Absolute Viewport, mengunci peta dari global scroll.
     <div className="fixed top-17.5 md:top-21.25 bottom-0 left-0 right-0 flex flex-col md:flex-row bg-white z-40 overflow-hidden">
       
       <MapSidebar 
@@ -212,6 +233,9 @@ export default function PetaKemitraanPage() {
         triggerContactModal={triggerContactModal}
         userLoc={userLoc}
         setShowGuide={setShowGuide}
+        // PROPS BARU UNTUK CUSTOM ERROR UX:
+        searchError={searchError}
+        clearSearchError={() => setSearchError(null)}
       />
 
       <MapView 
