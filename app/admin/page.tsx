@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import pool from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
 import Link from 'next/link';
-import RealtimeHeader from './RealtimeHeader'; // <-- IMPORT KOMPONEN JAM BARU KITA
+import RealtimeHeader from './RealtimeHeader';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -13,6 +13,13 @@ interface ProdukPopuler {
   harga: number;
   foto_produk: string;
 }
+
+// FIX: Helper Pintar untuk menangani gambar Base64 (Baru) atau Path Folder (Lama)
+const getImageUrl = (foto: string | null | undefined) => {
+  if (!foto) return 'https://placehold.co/100x100?text=No+Image';
+  if (foto.startsWith('data:image') || foto.startsWith('http')) return foto;
+  return `/uploads/produk/${foto}`;
+};
 
 export default async function AdminDashboard() {
   // VARIABEL STATISTIK
@@ -57,7 +64,7 @@ export default async function AdminDashboard() {
   }
 
   return (
-    <div className="animate-fade-in-up pb-4"> {/* pb dikurangi karena footer ada di wrapper */}
+    <div className="animate-fade-in-up pb-4">
       
       {/* HEADER REAL-TIME DIPANGGIL DI SINI */}
       <RealtimeHeader />
@@ -133,9 +140,10 @@ export default async function AdminDashboard() {
                 <div key={index} className="flex items-center gap-4">
                   <div className="w-8 font-black text-gray-300 text-xl text-right">0{index + 1}</div>
                   <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
+                    {/* FIX: Menggunakan Helper ImageUrl agar Support Base64 & Fallback */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
-                      src={prod.foto_produk ? `/uploads/produk/${prod.foto_produk}` : '/placeholder-product.png'} 
+                      src={getImageUrl(prod.foto_produk)} 
                       alt={prod.nama_produk} 
                       className="w-full h-full object-cover"
                     />
