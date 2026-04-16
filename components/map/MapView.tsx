@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-// @ts-expect-error - Mengabaikan peringatan TypeScript terkait deklarasi modul CSS
 import 'leaflet/dist/leaflet.css';
 import { Mitra } from '@/lib/geo-utils';
 
