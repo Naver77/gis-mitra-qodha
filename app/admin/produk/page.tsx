@@ -3,16 +3,16 @@ import React, { useState, useEffect, useTransition } from 'react';
 import { getProdukList, getKategoriOptions, deleteProduk, saveProduk } from './actions';
 
 interface KategoriOption {
-  id_kategori: string | number;
+  id_kategori: string;
   nama_kategori: string;
 }
 
 interface ProdukItem {
-  id_produk: string | number;
-  id_kategori: string | number;
+  id_produk: string;
+  id_kategori: string;
   nama_kategori?: string;
   nama_produk: string;
-  harga: string | number;
+  harga: string;
   deskripsi: string;
   foto_produk: string;
   gender: string;
@@ -58,7 +58,6 @@ export default function ProdukPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, []);
 
-  // FIX: Menggunakan String() untuk memastikan tipe data sama saat dibandingkan (Number vs String)
   const filteredProduks = produks.filter(produk => 
     filterKategori === 'Semua' || String(produk.id_kategori) === String(filterKategori)
   );
@@ -68,7 +67,6 @@ export default function ProdukPage() {
   const totalPages = Math.ceil(filteredProduks.length / itemsPerPage) || 1;
   const currentData = filteredProduks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Reset pagination jika filter diubah
   useEffect(() => { setCurrentPage(1); }, [filterKategori]);
 
   const handleAdd = () => {
@@ -78,6 +76,15 @@ export default function ProdukPage() {
     setFotoFile(null);
     setFotoPreview('');
     setIsModalOpen(true);
+  };
+
+  // FIX: FUNGSI HELPER UNTUK MENANGANI GAMBAR BASE64 VS NAMA FILE LAMA
+  const getImageUrl = (foto: string) => {
+    if (!foto) return '';
+    // Jika formatnya sudah Base64 atau URL luar (http), langsung tampilkan!
+    if (foto.startsWith('data:image') || foto.startsWith('http')) return foto;
+    // Jika formatnya nama file biasa (data lama), tambahkan path folder
+    return `/uploads/produk/${foto}`;
   };
 
   const handleEdit = (produk: ProdukItem) => {
@@ -92,7 +99,8 @@ export default function ProdukPage() {
     });
     setDisplayHarga(new Intl.NumberFormat('id-ID').format(Number(produk.harga)));
     setFotoFile(null);
-    setFotoPreview(produk.foto_produk ? `/uploads/produk/${produk.foto_produk}` : '');
+    // Menggunakan fungsi getImageUrl untuk preview agar tidak memicu 404 error
+    setFotoPreview(getImageUrl(produk.foto_produk));
     setIsModalOpen(true);
   };
 
@@ -105,9 +113,9 @@ export default function ProdukPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const maxSize = 2 * 1024 * 1024; 
+      const maxSize = 1 * 1024 * 1024; // Batas 1MB
       if (file.size > maxSize) {
-        showToast("Ukuran foto terlalu besar! Maksimal 2MB.", "error");
+        showToast("Ukuran foto terlalu besar! Maksimal 1MB.", "error");
         e.target.value = ''; 
         return;
       }
@@ -222,7 +230,7 @@ export default function ProdukPage() {
                 <tr>
                   <th className="px-6 py-4 w-16 text-center border-x border-gray-800">No</th>
                   <th className="px-6 py-4 border-x border-gray-800">Detail Produk</th>
-                  <th className="px-6 py-4 border-x border-gray-800">Kategori</th>
+                  <th className="px-6 py-4 border-x border-gray-800">Kategori & Gender</th>
                   <th className="px-6 py-4 border-x border-gray-800">Harga Jual</th>
                   <th className="px-6 py-4 text-center w-28 border-x border-gray-800">Aksi</th>
                 </tr>
@@ -240,9 +248,15 @@ export default function ProdukPage() {
                       <td className="px-6 py-4 text-center text-gray-400 font-bold border-x border-gray-100">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                       <td className="px-6 py-4 border-x border-gray-100">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 shrink-0 shadow-inner">
+                          <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 shrink-0 shadow-inner relative">
+                            {/* FIX: Memanggil helper getImageUrl untuk memastikan Base64 dirender sempurna */}
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={row.foto_produk ? `/uploads/produk/${row.foto_produk}` : 'https://placehold.co/100x100?text=No+Image'} alt={row.nama_produk} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://placehold.co/100x100?text=Error'; }} />
+                            <img 
+                              src={row.foto_produk ? getImageUrl(row.foto_produk) : 'https://placehold.co/100x100?text=No+Image'} 
+                              alt={row.nama_produk} 
+                              className="w-full h-full object-cover" 
+                              onError={(e) => { e.currentTarget.src = 'https://placehold.co/100x100?text=Error'; }} 
+                            />
                           </div>
                           <div className="max-w-50">
                             <p className="font-bold text-gray-900 text-sm truncate" title={row.nama_produk}>{row.nama_produk}</p>
@@ -338,7 +352,7 @@ export default function ProdukPage() {
                 <div className="space-y-6">
                   <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 border-b border-gray-100 pb-2">Foto Visual</h3>
-                    <p className="text-[10px] text-red-500 font-bold mb-3">* Maksimal 2MB (JPG/PNG/WEBP)</p>
+                    <p className="text-[10px] text-red-500 font-bold mb-3">* Maksimal 1MB (JPG/PNG/WEBP)</p>
                     <div className="w-full aspect-4/5 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 hover:border-brand-gold flex flex-col items-center justify-center overflow-hidden relative group transition-colors cursor-pointer">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={fotoPreview || 'https://placehold.co/400x500?text=Upload+Foto'} alt="Preview" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://placehold.co/400x500?text=Error'; }} />
