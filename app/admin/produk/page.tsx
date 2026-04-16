@@ -3,16 +3,16 @@ import React, { useState, useEffect, useTransition } from 'react';
 import { getProdukList, getKategoriOptions, deleteProduk, saveProduk } from './actions';
 
 interface KategoriOption {
-  id_kategori: string;
+  id_kategori: string | number;
   nama_kategori: string;
 }
 
 interface ProdukItem {
-  id_produk: string;
-  id_kategori: string;
+  id_produk: string | number;
+  id_kategori: string | number;
   nama_kategori?: string;
   nama_produk: string;
-  harga: string;
+  harga: string | number;
   deskripsi: string;
   foto_produk: string;
   gender: string;
@@ -23,6 +23,8 @@ export default function ProdukPage() {
   const [kategoris, setKategoris] = useState<KategoriOption[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
+  const [filterKategori, setFilterKategori] = useState<string>('Semua');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -31,7 +33,6 @@ export default function ProdukPage() {
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string>('');
   
-  // State khusus untuk tampilan harga (berformat titik)
   const [displayHarga, setDisplayHarga] = useState('');
 
   const [toast, setToast] = useState<{ show: boolean; msg: string; type: 'success' | 'error' }>({ show: false, msg: '', type: 'success' });
@@ -39,11 +40,6 @@ export default function ProdukPage() {
     setToast({ show: true, msg, type });
     setTimeout(() => setToast({ show: false, msg: '', type: 'success' }), 3000);
   };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(produks.length / itemsPerPage) || 1;
-  const currentData = produks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const loadData = async () => {
     setIsLoadingData(true);
@@ -62,6 +58,19 @@ export default function ProdukPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, []);
 
+  // FIX: Menggunakan String() untuk memastikan tipe data sama saat dibandingkan (Number vs String)
+  const filteredProduks = produks.filter(produk => 
+    filterKategori === 'Semua' || String(produk.id_kategori) === String(filterKategori)
+  );
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredProduks.length / itemsPerPage) || 1;
+  const currentData = filteredProduks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Reset pagination jika filter diubah
+  useEffect(() => { setCurrentPage(1); }, [filterKategori]);
+
   const handleAdd = () => {
     setEditingId(null);
     setFormData({ id_kategori: '', nama_produk: '', harga: '', deskripsi: '', gender: '', foto_lama: '' });
@@ -72,37 +81,34 @@ export default function ProdukPage() {
   };
 
   const handleEdit = (produk: ProdukItem) => {
-    setEditingId(produk.id_produk);
+    setEditingId(String(produk.id_produk));
     setFormData({ 
-      id_kategori: produk.id_kategori, 
+      id_kategori: String(produk.id_kategori), 
       nama_produk: produk.nama_produk, 
-      harga: produk.harga, 
+      harga: String(produk.harga), 
       deskripsi: produk.deskripsi || '', 
       gender: produk.gender || '',
       foto_lama: produk.foto_produk || ''
     });
-    // Format harga asli ke tampilan bertitik saat diedit
     setDisplayHarga(new Intl.NumberFormat('id-ID').format(Number(produk.harga)));
     setFotoFile(null);
     setFotoPreview(produk.foto_produk ? `/uploads/produk/${produk.foto_produk}` : '');
     setIsModalOpen(true);
   };
 
-  // FITUR: Auto-format harga saat mengetik
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\D/g, ''); // Hilangkan semua huruf/titik/koma
-    setFormData({ ...formData, harga: rawValue }); // Simpan angka murni ke state
-    setDisplayHarga(rawValue ? new Intl.NumberFormat('id-ID').format(Number(rawValue)) : ''); // Tampilkan dengan titik
+    const rawValue = e.target.value.replace(/\D/g, ''); 
+    setFormData({ ...formData, harga: rawValue }); 
+    setDisplayHarga(rawValue ? new Intl.NumberFormat('id-ID').format(Number(rawValue)) : ''); 
   };
 
-  // FITUR: Validasi Maksimal 2MB
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const maxSize = 2 * 1024 * 1024; // 2MB dalam bytes
+      const maxSize = 2 * 1024 * 1024; 
       if (file.size > maxSize) {
         showToast("Ukuran foto terlalu besar! Maksimal 2MB.", "error");
-        e.target.value = ''; // Reset input file
+        e.target.value = ''; 
         return;
       }
       setFotoFile(file);
@@ -140,7 +146,7 @@ export default function ProdukPage() {
     });
   };
 
-  const handleDelete = (id: string, imgName: string) => {
+  const handleDelete = (id: string | number, imgName: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus produk ini secara permanen?')) {
       startTransition(async () => {
         try {
@@ -153,7 +159,7 @@ export default function ProdukPage() {
     }
   };
 
-  const formatRupiah = (angka: string) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(angka));
+  const formatRupiah = (angka: string | number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(angka));
 
   return (
     <>
@@ -192,14 +198,31 @@ export default function ProdukPage() {
         </div>
 
         <div className="bg-white rounded-3xl shadow-lg border border-gray-200 flex flex-col overflow-hidden">
-          <div className="h-4 bg-gray-900 w-full"></div>
+          
+          {/* HEADER TABEL DENGAN FILTER */}
+          <div className="p-4 border-b border-gray-800 bg-gray-900 flex justify-end">
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Filter Kategori:</label>
+              <select 
+                value={filterKategori} 
+                onChange={(e) => setFilterKategori(e.target.value)} 
+                className="border border-gray-700 rounded-lg px-4 py-2 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-brand-gold cursor-pointer bg-gray-800"
+              >
+                <option value="Semua">Semua Kategori</option>
+                {kategoris.map(kat => (
+                  <option key={String(kat.id_kategori)} value={String(kat.id_kategori)}>{kat.nama_kategori}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-900 border-b border-gray-800 text-gray-300 font-bold tracking-widest uppercase text-[10px]">
                 <tr>
                   <th className="px-6 py-4 w-16 text-center border-x border-gray-800">No</th>
                   <th className="px-6 py-4 border-x border-gray-800">Detail Produk</th>
-                  <th className="px-6 py-4 border-x border-gray-800">Kategori & Gender</th>
+                  <th className="px-6 py-4 border-x border-gray-800">Kategori</th>
                   <th className="px-6 py-4 border-x border-gray-800">Harga Jual</th>
                   <th className="px-6 py-4 text-center w-28 border-x border-gray-800">Aksi</th>
                 </tr>
@@ -208,10 +231,12 @@ export default function ProdukPage() {
                 {isLoadingData ? (
                   <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold animate-pulse border-x border-gray-100">Memuat Data dari Database...</td></tr>
                 ) : currentData.length === 0 ? (
-                  <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold italic border-x border-gray-100">Belum ada data produk.</td></tr>
+                  <tr><td colSpan={5} className="p-10 text-center text-gray-400 font-bold italic border-x border-gray-100">
+                    {filterKategori === 'Semua' ? 'Belum ada data produk.' : 'Tidak ada produk dalam kategori ini.'}
+                  </td></tr>
                 ) : (
                   currentData.map((row, idx) => (
-                    <tr key={row.id_produk} className="hover:bg-blue-50/10 transition">
+                    <tr key={String(row.id_produk)} className="hover:bg-blue-50/10 transition">
                       <td className="px-6 py-4 text-center text-gray-400 font-bold border-x border-gray-100">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                       <td className="px-6 py-4 border-x border-gray-100">
                         <div className="flex items-center gap-4">
@@ -251,10 +276,10 @@ export default function ProdukPage() {
             </table>
           </div>
 
-          {!isLoadingData && produks.length > 0 && (
+          {!isLoadingData && filteredProduks.length > 0 && (
             <div className="p-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-900">
               <div className="text-xs font-bold text-gray-400">
-                Menampilkan <span className="text-white">{(currentPage - 1) * itemsPerPage + 1}</span> hingga <span className="text-white">{Math.min(currentPage * itemsPerPage, produks.length)}</span> dari <span className="text-white">{produks.length}</span> entri
+                Menampilkan <span className="text-white">{(currentPage - 1) * itemsPerPage + 1}</span> hingga <span className="text-white">{Math.min(currentPage * itemsPerPage, filteredProduks.length)}</span> dari <span className="text-white">{filteredProduks.length}</span> entri
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white disabled:opacity-50 transition"><i className="fa-solid fa-chevron-left text-xs"></i></button>
@@ -291,7 +316,7 @@ export default function ProdukPage() {
                         <select required value={formData.id_kategori} onChange={e => setFormData({...formData, id_kategori: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none text-sm font-bold text-gray-900 cursor-pointer">
                           <option value="">-- Pilih --</option>
                           {kategoris.map(cat => (
-                            <option key={cat.id_kategori} value={cat.id_kategori}>{cat.nama_kategori}</option>
+                            <option key={String(cat.id_kategori)} value={String(cat.id_kategori)}>{cat.nama_kategori}</option>
                           ))}
                         </select>
                       </div>
@@ -299,7 +324,6 @@ export default function ProdukPage() {
                         <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">Harga Jual (Rp)</label>
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">Rp</span>
-                          {/* FITUR AUTO-FORMATTER: Tipe diganti text, value pakai displayHarga */}
                           <input type="text" required value={displayHarga} onChange={handlePriceChange} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none text-sm font-bold text-gray-900 font-mono" placeholder="150.000" />
                         </div>
                       </div>
@@ -329,7 +353,6 @@ export default function ProdukPage() {
                   <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
                     <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 border-b border-gray-100 pb-3">Kategori Aroma / Gender</h3>
                     <div className="space-y-2">
-                      {/* OPSI GENDER TELAH DIPERBARUI */}
                       <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${formData.gender === '' ? 'bg-green-50 border-green-500 shadow-sm' : 'border-gray-200 hover:bg-gray-50 bg-gray-50'}`}>
                         <input type="radio" name="gender" value="" checked={formData.gender === ''} onChange={e => setFormData({...formData, gender: e.target.value})} className="text-green-500 focus:ring-green-500 w-4 h-4 accent-green-600" />
                         <span className="text-sm font-bold text-gray-700 flex items-center gap-2"><i className="fa-solid fa-leaf text-green-500 w-4"></i> Netral / Ruangan</span>

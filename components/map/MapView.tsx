@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
+// @ts-expect-error - Mengabaikan peringatan TypeScript terkait deklarasi modul CSS
 import 'leaflet/dist/leaflet.css';
 import { Mitra } from '@/lib/geo-utils';
 
@@ -82,16 +83,31 @@ export default function MapView({
       .catch((err) => console.error("GeoJSON Error:", err));
   }, []);
 
+  // PERBAIKAN ALGORITMA PENCOCOKAN DATA REAL: Smart Text Matching
   const cityMitraCounts = useMemo(() => {
+    if (!geoJsonData) return {};
+    
     const counts: Record<string, number> = {};
-    processedMitra.forEach(mitra => {
-      const m = mitra as Mitra & { kota?: string; kabupaten?: string; kecamatan?: string };
-      const rawCityName = String(m.kota || m.kabupaten || m.kecamatan || "Tangerang Selatan"); 
-      const cleanName = normalizeCityName(rawCityName);
-      counts[cleanName] = (counts[cleanName] || 0) + 1;
+    
+    geoJsonData.features.forEach(feature => {
+      const rawWADMKK = feature.properties?.WADMKK || '';
+      if (!rawWADMKK) return;
+
+      const cleanName = normalizeCityName(rawWADMKK); // e.g., "tangerang selatan"
+
+      // Hitung mitra yang "Kecamatan" atau "Alamat Lengkap" nya mengandung nama kota ini
+      const count = processedMitra.filter(mitra => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const m = mitra as any; 
+        const fullTextContext = `${m.kecamatan || ''} ${m.alamat_lengkap || ''} ${m.kota || ''}`.toLowerCase();
+        return fullTextContext.includes(cleanName);
+      }).length;
+
+      counts[cleanName] = count;
     });
+
     return counts;
-  }, [processedMitra]);
+  }, [processedMitra, geoJsonData]);
 
   const getFeatureStyle = (feature: GeoJsonFeature) => {
     const rawWADMKK = feature.properties?.WADMKK || '';
@@ -101,10 +117,12 @@ export default function MapView({
     let fillColor = '#9ca3af'; 
     let fillOpacity = 0.1;
 
+    // Logika pewarnaan kepadatan yang sekarang sudah terhubung dengan data riil
     if (mitraCount > 0) {
-      if (mitraCount > 10) fillColor = '#10b981'; 
-      else if (mitraCount > 3) fillColor = '#fbbf24'; 
-      else fillColor = '#3b82f6'; 
+      if (mitraCount >= 10) fillColor = '#10b981'; // Padat (Hijau)
+      else if (mitraCount >= 4) fillColor = '#fbbf24'; // Sedang (Kuning)
+      else fillColor = '#3b82f6'; // Sedikit (Biru)
+      
       fillOpacity = zoomLevel > 11 ? 0.15 : 0.6; 
     }
 
@@ -135,7 +153,7 @@ export default function MapView({
         <MapContainer 
           center={[mapCenter.lat, mapCenter.lng]} 
           zoom={zoomLevel} 
-          className="w-full h-full z-10" // Pakai class w-full h-full ketimbang inline style
+          className="w-full h-full z-10"
         >
           <MapResizer />
           <MapEventController setZoomLevel={setZoomLevel} />
@@ -155,6 +173,8 @@ export default function MapView({
                 const rawWADMKK = feature.properties?.WADMKK || '';
                 const cleanName = normalizeCityName(rawWADMKK);
                 const count = cityMitraCounts[cleanName] || 0;
+                
+                // Tooltip Info Kepadatan
                 layer.bindTooltip(`<b>${rawWADMKK}</b><br/>${count} Mitra Aktif`, { sticky: true });
               }}
             />
@@ -220,8 +240,8 @@ export default function MapView({
         {zoomLevel < 12 && (
           <div className="bg-white/90 backdrop-blur px-3 py-2 rounded-xl shadow-md border border-gray-100 flex flex-col gap-1 text-[10px] font-bold text-gray-600">
             <p className="text-gray-800 border-b border-gray-200 pb-1 mb-1">Kepadatan Area</p>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500 opacity-80"></span> Padat (&gt;10 Mitra)</div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-400 opacity-80"></span> Sedang (4-10 Mitra)</div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-emerald-500 opacity-80"></span> Padat (&ge;10 Mitra)</div>
+            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-yellow-400 opacity-80"></span> Sedang (4-9 Mitra)</div>
             <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500 opacity-80"></span> Sedikit (1-3 Mitra)</div>
           </div>
         )}
