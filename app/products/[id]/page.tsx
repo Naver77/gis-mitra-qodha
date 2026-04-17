@@ -1,10 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
-// --- 1. DEFINISI TIPE DATA (Sesuai Database MySQL) ---
 interface Product {
   id_produk: string | number;
   nama_produk: string;
@@ -12,6 +11,7 @@ interface Product {
   harga: number;
   gender?: string | null; 
   gambar?: string | null;
+  foto_produk?: string | null; // FIX: Tambahkan tipe untuk foto_produk
   rating?: number;
   terjual?: number;
   stok?: number;
@@ -23,6 +23,13 @@ const formatRupiah = (angka: number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 };
 
+// FIX: Fungsi Pembaca Base64 
+const getImageUrl = (foto: string | null | undefined) => {
+  if (!foto) return '';
+  if (foto.startsWith('data:image') || foto.startsWith('http')) return foto;
+  return `/uploads/produk/${foto}`;
+};
+
 export default function ProductDetail() {
   const params = useParams(); 
   const [product, setProduct] = useState<Product | null>(null);
@@ -30,27 +37,50 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('deskripsi');
 
-  // --- 2. AMBIL DATA DARI DATABASE (REAL API) ---
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          if (currentScrollY < 85) {
+            setIsHeaderVisible(true);
+          } else if (currentScrollY < lastScrollY.current) {
+            setIsHeaderVisible(true);
+          } else {
+            setIsHeaderVisible(false);
+          }
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
     const fetchProductData = async () => {
       try {
         setIsLoading(true);
-        
         if (!params || !params.id) {
           if (isMounted) setIsLoading(false);
           return;
         }
 
         const productId = String(Array.isArray(params.id) ? params.id[0] : params.id);
-
         const response = await fetch('/api/products');
         if (!response.ok) throw new Error('Gagal mengambil data API');
         
         const data = await response.json();
         if (data.error) throw new Error(data.error);
-
         if (!isMounted) return;
 
         const foundProduct = data.find((p: Product) => String(p.id_produk) === productId);
@@ -69,23 +99,17 @@ export default function ProductDetail() {
     };
 
     fetchProductData();
-
-    return () => {
-      isMounted = false; 
-    };
+    return () => { isMounted = false; };
   }, [params]);
 
-  // --- 3. FUNGSI WHATSAPP DINAMIS ---
   const handleBuyNow = () => {
     if (!product) return;
     const waNumber = "6281717302223"; 
     const total = formatRupiah(product.harga * quantity);
     const text = `Halo Admin Qodha!%0A%0ASaya tertarik untuk memesan:%0A📦 *${product.nama_produk}*%0A🔢 Jumlah: ${quantity} pcs%0A💰 Estimasi Total: ${total}%0A%0AMohon info ketersediaan stok dan ongkos kirim. Terima kasih!`;
-    
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
   };
 
-  // --- RENDER LOADING ---
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25">
@@ -97,7 +121,6 @@ export default function ProductDetail() {
     );
   }
 
-  // --- RENDER 404 ---
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25 px-4">
@@ -115,7 +138,6 @@ export default function ProductDetail() {
     );
   }
 
-  // --- FALLBACK DATA ---
   const isPremium = product.nama_kategori.toLowerCase().includes('premium');
   const stokTersedia = product.stok !== undefined ? product.stok : 99;
   const ratingProduk = product.rating || "5.0";
@@ -123,22 +145,15 @@ export default function ProductDetail() {
   const deskripsiProduk = product.deskripsi || `Koleksi eksklusif ${product.nama_produk} dari Qodha Aromatic. Diracik menggunakan bahan-bahan alami pilihan dengan standar higienis yang tinggi. Menghasilkan aroma khas Timur Tengah yang tahan lama, sangat cocok untuk menemani relaksasi, majelis ilmu, dan mengharumkan ruangan Anda sehari-hari.`;
   const listAroma = product.aroma ? product.aroma.split(',') : (isPremium ? ["Kayu Gaharu", "Mawar Arab", "Oud Murni"] : ["Floral Lembut", "Rempah Alami", "Woody"]);
 
-  // --- RENDER HALAMAN UTAMA ---
+  // FIX: Tentukan URL Akhir menggunakan helper Base64
+  const fotoToUse = product.foto_produk || product.gambar;
+  const finalImageUrl = getImageUrl(fotoToUse);
+
   return (
     <div className="bg-gray-50 min-h-screen pb-24">
-      
-      {/* 1. SPACER HEADER (PENTING!)
-          Memastikan layout tidak tertutup Header saat pertama kali dimuat,
-          namun akan ikut ter-scroll ke atas sehingga Breadcrumb bisa mentok sempurna.
-      */}
-      <div className="h-20 md:h-22.5 w-full bg-transparent pointer-events-none"></div>
+      <div className="h-20 md:h-21.25 w-full bg-transparent pointer-events-none"></div>
 
-      {/* 2. BREADCRUMB
-          PERBAIKAN: pt-[85px] dihapus sepenuhnya!
-          Kini murni menggunakan py-3.5, sehingga saat mentok ke top-0, 
-          tidak ada ruang putih kosong yang menyebalkan.
-      */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm transition-shadow duration-300">
+      <div className={`bg-white border-b border-gray-100 sticky z-40 shadow-sm transition-all duration-300 ease-in-out ${isHeaderVisible ? 'top-20 md:top-21.25' : 'top-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <nav className="flex items-center text-xs md:text-sm text-gray-500 font-bold whitespace-nowrap overflow-x-auto hide-scrollbar">
             <Link href="/" className="hover:text-brand-gold transition-colors flex items-center gap-2"><i className="fa-solid fa-house"></i> Beranda</Link>
@@ -152,15 +167,11 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* 3. PRODUK UTAMA */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 md:mt-8">
         <div className="bg-white rounded-4xl md:rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden relative">
-          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 relative">
             
-            {/* Kiri: Gambar Produk (Sticky diubah ke top-[80px] agar pas di bawah breadcrumb) */}
-            <div className="relative p-6 md:p-12 lg:p-16 bg-gray-50 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 lg:sticky lg:top-20 lg:h-[calc(100vh-100px)]">
-              
+            <div className={`relative p-6 md:p-12 lg:p-16 bg-gray-50 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 lg:sticky lg:h-[calc(100vh-140px)] transition-all duration-300 ease-in-out ${isHeaderVisible ? 'lg:top-35' : 'lg:top-15'}`}>
               {isPremium && (
                 <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10 bg-gray-900 text-brand-gold border border-brand-gold/30 text-[10px] md:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-xl animate-fade-in-up flex items-center gap-2">
                   <i className="fa-solid fa-crown"></i> Premium
@@ -168,9 +179,10 @@ export default function ProductDetail() {
               )}
 
               <div className="relative w-full max-w-sm md:max-w-md aspect-square rounded-2xl md:rounded-4xl overflow-hidden shadow-2xl group border border-gray-200/50 bg-white">
-                {product.gambar ? (
+                {/* FIX: Tampilkan gambar Base64 di sini */}
+                {finalImageUrl ? (
                   <img 
-                    src={product.gambar} 
+                    src={finalImageUrl} 
                     alt={product.nama_produk} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
@@ -182,7 +194,6 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Kanan: Info & Aksi */}
             <div className="p-6 md:p-12 lg:p-16 flex flex-col justify-center">
               
               <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -208,8 +219,6 @@ export default function ProductDetail() {
 
               <div className="bg-gray-50 rounded-2xl p-5 md:p-6 mb-8 border border-gray-100">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                  
-                  {/* Kuantitas */}
                   <div>
                     <span className="block text-[10px] md:text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">Atur Jumlah</span>
                     <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 w-32 shadow-sm">
@@ -233,7 +242,6 @@ export default function ProductDetail() {
                       </button>
                     </div>
                   </div>
-
                   <div className="text-sm font-medium text-gray-500 text-right w-full sm:w-auto">
                     Stok Tersedia: <br className="hidden sm:block" />
                     <span className="font-black text-xl text-gray-900">{stokTersedia}</span> pcs
@@ -241,7 +249,6 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              {/* Tombol Aksi */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <button 
                   onClick={handleBuyNow}
