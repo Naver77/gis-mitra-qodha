@@ -112,7 +112,8 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25">
+      // FIX: Menghapus pt-21.25 karena LayoutWrapper sudah memberikan spacer
+      <div className="min-h-[calc(100vh-85px)] flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center animate-fade-in-up">
           <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-gold rounded-full animate-spin mb-4 shadow-lg"></div>
           <p className="text-gray-500 font-extrabold tracking-widest uppercase text-xs animate-pulse">Menyiapkan Produk...</p>
@@ -123,7 +124,8 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-21.25 px-4">
+      // FIX: Menghapus pt-21.25 agar posisi 404 center sempurna
+      <div className="min-h-[calc(100vh-85px)] flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center bg-white p-8 md:p-12 rounded-4xl shadow-2xl border border-gray-100 max-w-md w-full animate-fade-in-up">
           <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
             <i className="fa-solid fa-box-open text-4xl text-gray-400"></i>
@@ -151,7 +153,7 @@ export default function ProductDetail() {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-24">
-      <div className="h-20 md:h-21.25 w-full bg-transparent pointer-events-none"></div>
+      {/* FIX: Element div spacer manual dihapus dari sini */}
 
       <div className={`bg-white border-b border-gray-100 sticky z-40 shadow-sm transition-all duration-300 ease-in-out ${isHeaderVisible ? 'top-20 md:top-21.25' : 'top-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
