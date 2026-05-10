@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🌍 Qodha Aromatic WebGIS & CRM
 
-## Getting Started
+Sistem Informasi Geografis (WebGIS) komprehensif berbasis Cloud Serverless untuk pemetaan dan manajemen jaringan mitra distribusi Qodha Aromatic. Dibangun menggunakan arsitektur modern Next.js untuk skalabilitas dan performa maksimal.
 
-First, run the development server:
+✨ Fitur Utama (Core Features)
 
-```bash
+🗺️ Spasial & Pemetaan (WebGIS)
+
+Kalkulasi Radius Cerdas: Implementasi algoritma Haversine Formula (LBS) untuk menghitung jarak garis lurus dari lokasi pengguna ke ratusan mitra secara real-time di sisi klien (Zero Server Load).
+
+Smart Geocoding: Ekstraksi otomatis Latitude, Longitude, Kecamatan, dan Kota hanya dengan menempelkan URL Google Maps. Diotaki oleh integrasi API Nominatim OpenStreetMap.
+
+Choropleth Polygon Map: Visualisasi densitas (kepadatan) jumlah mitra per wilayah menggunakan GeoJSON teroptimasi dengan HTML5 Canvas Rendering.
+
+🤝 Customer Relationship Management (CRM)
+
+Lead Generation Routing: Melindungi privasi kontak mitra dengan merutekan pesan prospek pembeli melalui formulir interaktif menuju WhatsApp Customer Service pusat secara terotomatisasi.
+
+Dasbor Analitik Real-time: Memantau laporan Top Produk Diminati dan Mitra Paling Dicari berdasarkan log interaksi spasial pengguna.
+
+🔐 Keamanan & Performa
+
+Otentikasi Berlapis: Sistem login administrator dilindungi enkripsi Bcrypt Hashing dan sesi JSON Web Token (JWT) berbasis Cookies (HttpOnly).
+
+Incremental Static Regeneration (ISR): Caching komputasi agregasi basis data untuk mempercepat waktu muat peta menjadi di bawah 0.1 detik.
+
+🚀 Panduan Instalasi (Development)
+
+Sistem ini membutuhkan Node.js (Versi 18.x atau lebih baru) dan Peladen Basis Data MySQL (XAMPP/Laragon).
+
+1. Kloning Repositori & Instalasi Dependensi
+
+# Buka terminal dan masuk ke folder proyek
+cd qodha-webgis
+
+# Instalasi paket NPM
+npm install
+
+
+2. Konfigurasi Lingkungan (Environment Variables)
+Buat file .env di direktori utama (root) dan sesuaikan dengan kredensial basis data Anda:
+
+DB_HOST="127.0.0.1"
+DB_PORT="3306"
+DB_USER="root"
+DB_PASSWORD=""
+DB_NAME="db_qodha_gis"
+JWT_SECRET="rahasia-qodha-aromatic-s1"
+
+
+3. Impor Basis Data
+
+Buka phpMyAdmin atau perangkat lunak manajemen MySQL lainnya.
+
+Buat basis data baru bernama db_qodha_gis.
+
+Impor file Sinkronisasi_Database_Total.sql yang tersedia.
+
+(Kredensial Admin Bawaan: Username: admin | Password: admin123)
+
+4. Jalankan Peladen Lokal
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Buka peramban (browser) dan akses http://localhost:3000.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+📚 Hak Cipta & Lisensi
 
-## Learn More
+Dikembangkan secara eksklusif untuk PT Dobha Putra Salim (Qodha Aromatic) sebagai proyek pemenuhan Tugas Akhir / Skripsi pada Program Studi Informatika, STIKOM EL RAHMA.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dikembangkan oleh: Abdul Aziz Fayyadh Prasojo (2026)

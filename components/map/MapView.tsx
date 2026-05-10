@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -71,52 +71,37 @@ export default function MapView({
   
   const [geoJsonData, setGeoJsonData] = useState<GeoJsonData | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(12); 
+  // TAMBAHAN STATE UNTUK REKAP KOTA (Menggantikan useMemo yang berat)
+  const [cityMitraCounts, setCityMitraCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    fetch('/assets/geojson/batas_kabupaten.geojson')
-      .then((res) => {
+    // LEVEL 3 OPTIMIZATION: Ambil GeoJSON dan Data Rekap API secara BERSAMAAN (Paralel)
+    // Jauh lebih cepat daripada menghitung satu per satu koordinat di browser pengguna
+    Promise.all([
+      fetch('/assets/geojson/batas_kabupaten.geojson').then((res) => {
         if (!res.ok) throw new Error("Gagal load GeoJSON");
         return res.json();
-      })
-      .then((data: GeoJsonData) => setGeoJsonData(data))
-      .catch((err) => console.error("GeoJSON Error:", err));
+      }),
+      fetch('/api/mitra-summary').then((res) => res.json())
+    ])
+    .then(([geoData, summaryData]) => {
+      setGeoJsonData(geoData);
+      setCityMitraCounts(summaryData); // Menyimpan rekap O(1) Instan
+    })
+    .catch((err) => console.error("Map Data Fetch Error:", err));
   }, []);
-
-  // PERBAIKAN ALGORITMA PENCOCOKAN DATA REAL: Smart Text Matching
-  const cityMitraCounts = useMemo(() => {
-    if (!geoJsonData) return {};
-    
-    const counts: Record<string, number> = {};
-    
-    geoJsonData.features.forEach(feature => {
-      const rawWADMKK = feature.properties?.WADMKK || '';
-      if (!rawWADMKK) return;
-
-      const cleanName = normalizeCityName(rawWADMKK); // e.g., "tangerang selatan"
-
-      // Hitung mitra yang "Kecamatan" atau "Alamat Lengkap" nya mengandung nama kota ini
-      const count = processedMitra.filter(mitra => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const m = mitra as any; 
-        const fullTextContext = `${m.kecamatan || ''} ${m.alamat_lengkap || ''} ${m.kota || ''}`.toLowerCase();
-        return fullTextContext.includes(cleanName);
-      }).length;
-
-      counts[cleanName] = count;
-    });
-
-    return counts;
-  }, [processedMitra, geoJsonData]);
 
   const getFeatureStyle = (feature: GeoJsonFeature) => {
     const rawWADMKK = feature.properties?.WADMKK || '';
     const cleanFeatureName = normalizeCityName(rawWADMKK);
+    
+    // Mengambil nilai instan dari API tanpa perlu looping (SANGAT RINGAN)
     const mitraCount = cityMitraCounts[cleanFeatureName] || 0;
 
     let fillColor = '#9ca3af'; 
     let fillOpacity = 0.1;
 
-    // Logika pewarnaan kepadatan yang sekarang sudah terhubung dengan data riil
+    // Logika pewarnaan kepadatan yang sekarang sudah terhubung dengan data Server
     if (mitraCount > 0) {
       if (mitraCount >= 10) fillColor = '#10b981'; // Padat (Hijau)
       else if (mitraCount >= 4) fillColor = '#fbbf24'; // Sedang (Kuning)
@@ -171,6 +156,8 @@ export default function MapView({
               onEachFeature={(feature: GeoJsonFeature, layer: L.Layer) => {
                 const rawWADMKK = feature.properties?.WADMKK || '';
                 const cleanName = normalizeCityName(rawWADMKK);
+                
+                // Mengambil nilai dari Object API untuk Tooltip (Instan)
                 const count = cityMitraCounts[cleanName] || 0;
                 
                 // Tooltip Info Kepadatan
@@ -208,7 +195,7 @@ export default function MapView({
                         {mitra.level}
                       </span>
                       <h4 className="font-bold text-gray-900 mb-1 leading-tight">{mitra.nama_toko}</h4>
-                      {mitra.distance && <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">{mitra.distance.toFixed(2)} KM dari Anda</p>}
+                      {mitra.distance !== undefined && <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">{mitra.distance.toFixed(2)} KM dari Anda</p>}
                       <button 
                         onClick={(e) => { e.stopPropagation(); triggerContactModal(mitra, mitra.distance); }} 
                         className="w-full text-xs bg-gray-900 text-white px-3 py-2.5 rounded-lg font-bold hover:bg-brand-gold hover:text-gray-900 transition-colors block mt-2"
