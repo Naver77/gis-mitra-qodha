@@ -1,11 +1,29 @@
 "use client";
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { loginAdmin } from '@/lib/auth'; // FIX: Mengarah ke file lib/auth.ts Anda
 import Link from 'next/link';
 
 export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isPending, startTransition] = useTransition();
+
+  // 1. STATE UNTUK MENGONTROL INPUT FORM
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  // 2. MUSNAHKAN CACHE MEMORI KETIKA HALAMAN INI DIMUAT
+  useEffect(() => {
+    // Gunakan setTimeout agar update state berjalan asinkron dan mencegah cascading renders
+    const clearTimer = setTimeout(() => {
+      setUsername('');
+      setPassword('');
+    }, 0);
+
+    // Membersihkan kemungkinan data sensitif yang tersisa di memory browser
+    sessionStorage.clear();
+
+    return () => clearTimeout(clearTimer);
+  }, []);
 
   const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,10 +37,11 @@ export default function LoginPage() {
       
       if (result?.error) {
         setErrorMsg(result.error);
+        // Jika login gagal, kita bisa hapus passwordnya saja untuk keamanan, username dibiarkan
+        setPassword('');
       } else if (result?.success) {
         // MENGHANCURKAN CACHE: Paksa browser memuat ulang halaman dari awal (Hard Reload)
-        // Agar browser lupa kalau sebelumnya halaman menu-menu admin pernah dikunci
-        window.location.href = '/admin';
+        window.location.replace('/admin'); // FIX: Gunakan replace() bukan href agar tidak masuk riwayat Back
       }
     });
   };
@@ -32,7 +51,6 @@ export default function LoginPage() {
       
       {/* Background Ornamen (Sesuai Desain PHP Anda) */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-amber-500 rounded-full blur-[150px] opacity-20 animate-pulse"></div>
-      {/* FIX: class diubah menjadi className */}
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-emerald-500 rounded-full blur-[150px] opacity-20 animate-pulse"></div>
 
       <div className="bg-white p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-md relative z-10 animate-fade-in-up">
@@ -51,7 +69,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLoginSubmit} className="space-y-5">
+        {/* 3. MATIKAN AUTOCOMPLETE AGAR BROWSER TIDAK MENYIMPAN HISTORY */}
+        <form onSubmit={handleLoginSubmit} className="space-y-5" autoComplete="off">
           <div>
             <label className="block text-gray-700 text-[10px] md:text-xs font-black mb-2 uppercase tracking-widest">Username</label>
             <div className="relative">
@@ -61,6 +80,9 @@ export default function LoginPage() {
                 required 
                 autoFocus
                 disabled={isPending}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="new-password" // Trik mencegah autocomplete bawaan Chrome
                 className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 focus:bg-white focus:outline-none transition-all font-medium disabled:opacity-50" 
                 placeholder="Masukkan username" 
               />
@@ -76,6 +98,9 @@ export default function LoginPage() {
                 name="password" 
                 required 
                 disabled={isPending}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password" // Trik mencegah autocomplete bawaan Chrome
                 className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 focus:bg-white focus:outline-none transition-all font-medium disabled:opacity-50" 
                 placeholder="••••••••" 
               />

@@ -150,64 +150,78 @@ export default function MapSidebar({
       {/* AREA KONTEN */}
       {selectedMitra ? (
         
-        <div className="flex-1 overflow-y-auto p-4 md:p-5 bg-gray-50/50 hide-scrollbar flex flex-col animate-fade-in-up">
+        // WRAPPER UTAMA: Mengunci tinggi maksimal agar tidak jebol
+        <div className="flex-1 overflow-hidden p-4 md:p-5 bg-gray-50/50 flex flex-col animate-fade-in-up">
           
-          <button 
-            onClick={() => handlePartnerClick('')} 
-            className="mb-4 text-xs font-bold text-gray-500 hover:text-gray-900 transition flex items-center gap-2 w-fit px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm shrink-0"
-          >
-            <i className="fa-solid fa-arrow-left"></i> Kembali ke Daftar
-          </button>
+          {/* AREA SCROLL: Membungkus Tombol Kembali, Foto, dan Teks secara bersamaan */}
+          <div className="flex-1 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+            
+            <button 
+              onClick={() => handlePartnerClick('')} 
+              className="mb-4 text-xs font-bold text-gray-500 hover:text-gray-900 transition flex items-center gap-2 w-fit px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm shrink-0"
+            >
+              <i className="fa-solid fa-arrow-left"></i> Kembali ke Daftar
+            </button>
 
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex-1 flex flex-col relative shrink-0">
-            <div className="h-32 bg-gray-200 relative shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={`https://placehold.co/600x300/f3f4f6/a1a1aa?text=Foto+${selectedMitra.nama_toko.replace(/\s/g, '+')}`} 
-                alt="Foto Toko" 
-                className="w-full h-full object-cover" 
-              />
-              <div className={`absolute top-3 left-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm border ${
-                  selectedMitra.level === 'Distributor' ? 'border-yellow-200 text-yellow-600' : 
-                  selectedMitra.level === 'Agen' ? 'border-emerald-200 text-emerald-600' : 'border-blue-200 text-blue-600'
-                }`}>
-                 {selectedMitra.level}
+            {/* KARTU INFO MITRA (Sekarang tinggi natural, memanjang ke bawah mengikuti isi) */}
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden relative">
+              
+              {/* GAMBAR TOKO - Karena bisa discroll, kita bisa buat sedikit lebih tinggi agar visualnya lebih bagus (h-40) */}
+              <div className="h-40 md:h-48 bg-gray-200 relative shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={`https://placehold.co/600x400/f3f4f6/a1a1aa?text=Foto+${selectedMitra.nama_toko.replace(/\s/g, '+')}`} 
+                  alt="Foto Toko" 
+                  className="w-full h-full object-cover" 
+                />
+                <div className={`absolute top-3 left-3 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-sm border ${
+                    selectedMitra.level === 'Distributor' ? 'border-yellow-200 text-yellow-600' : 
+                    selectedMitra.level === 'Agen' ? 'border-emerald-200 text-emerald-600' : 'border-blue-200 text-blue-600'
+                  }`}>
+                   {selectedMitra.level}
+                </div>
+              </div>
+
+              {/* AREA TEKS DETAIL */}
+              <div className="p-4 md:p-5 flex flex-col">
+                 <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-2 leading-tight">{selectedMitra.nama_toko}</h2>
+                 
+                 <div className="flex flex-wrap items-center gap-2 text-xs mb-4">
+                    <span className="font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">
+                      <i className="fa-solid fa-map-pin mr-1 text-gray-400"></i> {selectedMitra.kecamatan}
+                    </span>
+                    {selectedMitra.distance !== undefined && (
+                      <span className="font-bold text-brand-orange bg-orange-50 border border-orange-100 px-2 py-1 rounded-md">
+                        <i className="fa-solid fa-location-arrow mr-1"></i> {(selectedMitra.distance).toFixed(1)} KM
+                      </span>
+                    )}
+                 </div>
+
+                 <div className="mb-6">
+                   <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Alamat Lengkap</h4>
+                   <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
+                     {selectedMitra.alamat_lengkap}
+                   </p>
+                 </div>
+
+                 {/* Lencana Terverifikasi */}
+                 <div className="flex items-center gap-2 text-[10px] md:text-xs text-green-700 font-bold bg-green-50 p-3 rounded-xl border border-green-100 justify-center shrink-0">
+                   <i className="fa-solid fa-certificate text-lg"></i> Mitra Resmi & Terverifikasi
+                 </div>
               </div>
             </div>
-
-            <div className="p-5 flex flex-col flex-1 shrink-0">
-               <h2 className="text-xl font-extrabold text-gray-900 mb-2 leading-tight">{selectedMitra.nama_toko}</h2>
-               
-               <div className="flex flex-wrap items-center gap-2 text-xs mb-5">
-                  <span className="font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">
-                    <i className="fa-solid fa-map-pin mr-1 text-gray-400"></i> {selectedMitra.kecamatan}
-                  </span>
-                  {selectedMitra.distance !== undefined && (
-                    <span className="font-bold text-brand-orange bg-orange-50 border border-orange-100 px-2 py-1 rounded-md">
-                      <i className="fa-solid fa-location-arrow mr-1"></i> {(selectedMitra.distance).toFixed(1)} KM
-                    </span>
-                  )}
-               </div>
-
-               <div className="mb-6 flex-1">
-                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Alamat Lengkap</h4>
-                 <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
-                   {selectedMitra.alamat_lengkap}
-                 </p>
-               </div>
-
-               <div className="flex items-center gap-2 text-[10px] md:text-xs text-green-700 font-bold bg-green-50 p-3 rounded-xl border border-green-100 justify-center shrink-0">
-                 <i className="fa-solid fa-certificate text-lg"></i> Mitra Resmi & Terverifikasi
-               </div>
-            </div>
+            
+            {/* Jarak kosong di bawah kartu agar saat discroll mentok bawah, visualnya tidak terlalu mepet */}
+            <div className="h-4"></div>
           </div>
 
-          <div className="mt-4 shrink-0">
+          {/* AREA TOMBOL HUBUNGI - Tetap Fixed (Terkunci) di bagian paling bawah */}
+          <div className="mt-3 shrink-0 pt-3 border-t border-gray-200/80">
             <button 
               onClick={() => triggerContactModal(selectedMitra, selectedMitra.distance)} 
               className="w-full text-center bg-gray-900 hover:bg-brand-gold text-white hover:text-gray-900 font-bold py-3.5 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2 group"
             >
-              <i className="fa-solid fa-headset text-lg group-hover:scale-110 transition-transform"></i> Hubungi via Pusat
+              <i className="fa-solid fa-headset text-lg group-hover:scale-110 transition-transform"></i> Hubungi
             </button>
             <p className="text-center text-[10px] text-gray-400 mt-2 font-medium">Layanan ini menghubungkan Anda ke CS Qodha Pusat demi keamanan data.</p>
           </div>

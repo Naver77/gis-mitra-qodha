@@ -2,28 +2,40 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
 
-// LEVEL 2: Caching Next.js (ISR)
-// Menyimpan hasil perhitungan ke memori Vercel selama 1 Jam (3600 detik).
-// Artinya, database Hostinger hanya akan bekerja 1x dalam 1 jam, sisanya instan dari memori!
-export const revalidate = 3600; 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; 
+
+// FIX: JANGAN hapus kota/kabupaten, tapi SERAGAMKAN.
+const normalizeCityName = (name: string) => {
+  if (!name) return '';
+  let clean = name.toLowerCase().trim();
+  
+  // Standarisasi: "Kab." jadi "Kabupaten", "Kota Adm." jadi "Kota"
+  clean = clean.replace(/^(kota\s+administrasi|adm\.|administrasi)\s+/gi, 'kota ');
+  clean = clean.replace(/^(kabupaten\s+administrasi|kab\.)\s+/gi, 'kabupaten ');
+  clean = clean.replace(/^dki\s+/gi, '');
+  
+  return clean.replace(/\s+/g, ' ').trim();
+};
 
 export async function GET() {
   try {
-    // LEVEL 1: Agregasi di Level Database (MySQL berhitung sangat cepat)
     const [rows] = await pool.query<RowDataPacket[]>(`
       SELECT kota, COUNT(id_mitra) as total_mitra 
       FROM tb_mitra 
-      WHERE kota IS NOT NULL AND kota != ''
+      WHERE kota IS NOT NULL 
+        AND kota != ''
+        AND latitude IS NOT NULL 
+        AND longitude IS NOT NULL 
+        AND latitude != '0' 
+        AND longitude != '0'
       GROUP BY kota
     `);
     
-    // Membentuk data menjadi Object (Key-Value) agar dibaca Frontend dalam O(1) Millisecond
-    // Format Jadinya: { "bogor": 15, "depok": 8, "jakarta selatan": 4 }
     const summary: Record<string, number> = {};
     
     rows.forEach(row => {
-      // Membersihkan nama kota untuk berjaga-jaga
-      const cleanCity = row.kota.toLowerCase().replace(/^(kota|kabupaten|kab\.|adm\.)\s+/g, '').trim();
+      const cleanCity = normalizeCityName(row.kota);
       summary[cleanCity] = (summary[cleanCity] || 0) + Number(row.total_mitra);
     });
 

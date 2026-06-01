@@ -4,9 +4,15 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link'; 
 import { customConfirm } from './GlobalConfirmModal';
 
-export default function AdminWrapper({ children, adminName }: { children: React.ReactNode, adminName: string }) {
+// 1. IMPORT HOOK PROVIDER KITA
+import { useAdmin } from './AdminProvider'; 
+
+export default function AdminWrapper({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
+  
+  // 2. PANGGIL DATA DARI PROVIDER
+  const { name, role } = useAdmin(); 
 
   const handleLogout = async () => {
     const isConfirmed = await customConfirm(
@@ -18,8 +24,13 @@ export default function AdminWrapper({ children, adminName }: { children: React.
     );
 
     if (isConfirmed) {
-      document.cookie = "admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      window.location.href = '/admin/login';
+      // 3. PERBAIKAN LOGOUT: Panggil API POST yang aman
+      try {
+        await fetch('/admin/logout', { method: 'POST' });
+        window.location.href = '/admin/login';
+      } catch (error) {
+        console.error("Gagal logout:", error);
+      }
     }
   };
 
@@ -29,6 +40,7 @@ export default function AdminWrapper({ children, adminName }: { children: React.
     { title: 'Kategori', path: '/admin/kategori', icon: 'fa-tags' },
     { title: 'Data Mitra', path: '/admin/mitra', icon: 'fa-store' },
     { title: 'Data Prospek (Leads)', path: '/admin/prospek', icon: 'fa-address-book' },
+    { title: 'Laporan Analitik', path: '/admin/laporan', icon: 'fa-chart-pie' },
   ];
 
   return (
@@ -37,7 +49,6 @@ export default function AdminWrapper({ children, adminName }: { children: React.
       {/* SIDEBAR */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
-        {/* LOGO AREA - Diubah dari Teks menjadi Image Logo */}
         <div className="h-20 flex items-center justify-center border-b border-gray-800 shrink-0 gap-2 px-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
@@ -69,11 +80,6 @@ export default function AdminWrapper({ children, adminName }: { children: React.
             );
           })}
 
-          <p className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 mt-8">WebGIS Area</p>
-          <a href="/map" target="_blank" className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 font-bold text-sm text-gray-400 hover:text-emerald-400 hover:bg-gray-800 group">
-            <i className="fa-solid fa-map-location-dot w-5 text-center group-hover:animate-bounce"></i>
-            Lihat Peta (Live)
-          </a>
         </nav>
 
         <div className="p-4 border-t border-gray-800 shrink-0">
@@ -100,11 +106,14 @@ export default function AdminWrapper({ children, adminName }: { children: React.
           
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-extrabold text-gray-900">{adminName}</p>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 inline-block px-2 py-0.5 rounded-md mt-0.5">Administrator</p>
+              {/* 4. TAMPILKAN NAMA DAN ROLE SECARA DINAMIS */}
+              <p className="text-sm font-extrabold text-gray-900">{name}</p>
+              <p className={`text-[10px] font-bold uppercase tracking-widest inline-block px-2 py-0.5 rounded-md mt-0.5 ${role === 'Super Admin' ? 'bg-brand-gold text-yellow-900' : 'bg-emerald-50 text-emerald-600'}`}>
+                {role}
+              </p>
             </div>
             <div className="w-11 h-11 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center text-gray-500 shadow-inner">
-              <i className="fa-solid fa-user-shield"></i>
+              <i className={`fa-solid ${role === 'Super Admin' ? 'fa-crown text-yellow-500' : 'fa-user-shield'}`}></i>
             </div>
           </div>
         </header>

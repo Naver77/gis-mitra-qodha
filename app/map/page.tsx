@@ -60,20 +60,36 @@ export default function PetaKemitraanPage() {
   useEffect(() => {
     const fetchMitraFromDB = async () => {
       try {
-        const res = await fetch('/api/mitra');
+        // FIX CACHE: Tambahkan ?t=timestamp agar selalu mengambil titik koordinat terbaru
+        const res = await fetch(`/api/mitra?t=${new Date().getTime()}`);
         const data = await res.json();
         
         if (Array.isArray(data)) {
-          const mappedData: Mitra[] = data.map((m: RawMitraData) => ({
+          // SINGKIRKAN MITRA TANPA KOORDINAT & PERBAIKI TYPO KOMA
+          const validSpatialData = data.filter((m: RawMitraData) => {
+            // Ubah koma menjadi titik (Sanitasi Input ala Indonesia)
+            const rawLat = String(m.lat || m.latitude || '0').replace(',', '.');
+            const rawLng = String(m.lng || m.longitude || '0').replace(',', '.');
+            
+            const lat = Number(rawLat);
+            const lng = Number(rawLng);
+            
+            // Loloskan HANYA jika berupa angka valid dan bukan nol
+            return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+          });
+
+          const mappedData: Mitra[] = validSpatialData.map((m: RawMitraData) => ({
             id: String(m.id || m.id_mitra),
             nama_toko: m.nama_toko || m.nama || 'Tanpa Nama',
             level: (m.level || m.jenis_mitra || 'Reseller') as 'Distributor' | 'Agen' | 'Reseller',
             kecamatan: m.kecamatan || m.kota || '',
             alamat_lengkap: m.alamat_lengkap || m.alamat || '',
-            lat: Number(m.lat || m.latitude || 0),
-            lng: Number(m.lng || m.longitude || 0),
+            // Gunakan hasil sanitasi koma ke titik
+            lat: Number(String(m.lat || m.latitude || '0').replace(',', '.')),
+            lng: Number(String(m.lng || m.longitude || '0').replace(',', '.')),
             no_wa: String(m.no_hp || m.no_whatsapp || '6281717302223')
           }));
+          
           setMitraList(mappedData);
         }
       } catch (err) {
@@ -83,7 +99,6 @@ export default function PetaKemitraanPage() {
     
     fetchMitraFromDB();
 
-    // Dapatkan lokasi GPS User (Jika diizinkan)
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {

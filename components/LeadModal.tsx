@@ -53,26 +53,26 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, sourceContext = 
     localStorage.setItem('qodha_lead_name', formData.name);
     localStorage.setItem('qodha_lead_phone', formData.phone);
 
-    try {
-      await fetch('/api/prospek', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nama_prospek: formData.name,
-          no_whatsapp: formData.phone,
-          sumber_halaman: window.location.pathname === '/' ? 'Beranda' : window.location.pathname,
-          id_mitra_target: mitraId,
-          konteks_pesan: `${sourceContext} | Pesan: ${formData.message}`
-        })
-      });
-    } catch (err) {
-      console.error("Sistem CRM Gagal Mencatat:", err);
-    }
-    
+    // 1. Siapkan URL WhatsApp
     const waNumber = "6281717302223"; 
     const text = `Halo Admin Qodha!%0A%0ASaya *${formData.name}*.%0A%0ASaya tertarik dengan info: *${sourceContext}*.%0A%0APesan / Pertanyaan:%0A${formData.message}%0A%0AMohon info lebih lanjut. Terima kasih!`;
+    const waUrl = `https://wa.me/${waNumber}?text=${text}`;
+
+    // 2. Tembak API ke database TANPA await (biarkan berjalan di background)
+    fetch('/api/prospek', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nama_prospek: formData.name,
+        no_whatsapp: formData.phone,
+        sumber_halaman: window.location.pathname === '/' ? 'Beranda' : window.location.pathname,
+        id_mitra_target: mitraId,
+        konteks_pesan: `${sourceContext} | Pesan: ${formData.message}`
+      })
+    }).catch(err => console.error("Sistem CRM Gagal Mencatat:", err));
     
-    window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
+    // 3. Langsung buka WhatsApp SEGERA agar tidak dicegat Popup Blocker
+    window.open(waUrl, '_blank');
     
     setIsSubmitting(false); 
     onClose();

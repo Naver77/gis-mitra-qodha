@@ -3,10 +3,28 @@
 import pool from '@/lib/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { revalidatePath } from 'next/cache';
-// INFO: fs/promises dan path dihapus karena Vercel menggunakan Serverless (Read-Only)
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
 // ==============================================================
-// FUNGSI BANTU: Mengubah File menjadi Base64 (Aman untuk Vercel)
+// FUNGSI BANTU: Keamanan Sesi (JWT)
+// ==============================================================
+async function getAdminSession() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_session')?.value;
+  if (!token) return null;
+  
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jwtVerify(token, secret);
+    return payload; // Berisi { id_admin, nama, role }
+  } catch {
+    return null;
+  }
+}
+
+// ==============================================================
+// FUNGSI BANTU: Mengubah File menjadi Base64
 // ==============================================================
 async function fileToBase64(file: File): Promise<string> {
   const bytes = await file.arrayBuffer();
@@ -14,7 +32,7 @@ async function fileToBase64(file: File): Promise<string> {
   return `data:${file.type};base64,${buffer.toString('base64')}`;
 }
 
-// 1. Ambil Data Produk (JOIN dengan Kategori)
+// 1. Ambil Data Produk (Aman untuk Publik)
 export async function getProdukList() {
   try {
     const [rows] = await pool.query<RowDataPacket[]>(`
@@ -29,7 +47,7 @@ export async function getProdukList() {
   }
 }
 
-// 2. Ambil Kategori untuk Dropdown
+// 2. Ambil Kategori untuk Dropdown (Aman untuk Publik)
 export async function getKategoriOptions() {
   try {
     const [rows] = await pool.query<RowDataPacket[]>('SELECT id_kategori, nama_kategori FROM tb_kategori ORDER BY nama_kategori ASC');
@@ -39,16 +57,15 @@ export async function getKategoriOptions() {
   }
 }
 
-// 3. Hapus Data
-// FIX ESLINT: Menggunakan komentar disable untuk bypass strict linter tanpa merusak tipe data dari frontend
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function deleteProduk(id: number, _imgName: string) {
+// 3. Hapus Data (DILINDUNGI KHUSUS SUPER ADMIN)
+export async function deleteProduk(id: number) {
+  // GEMBOK KEAMANAN & RBAC
+  const session = await getAdminSession();
+  if (!session) return { error: 'Akses ditolak: Sesi tidak valid.' };
+  if (session.role !== 'Super Admin') return { error: 'Akses ditolak: Hanya Super Admin yang dapat menghapus produk.' };
+
   try {
     await pool.query('DELETE FROM tb_produk WHERE id_produk = ?', [id]);
-    
-    // INFO: Fungsi unlink(filePath) dihapus. 
-    // Karena menggunakan Base64, saat baris database di atas dihapus, maka gambarnya otomatis terhapus dari sistem.
-    
     revalidatePath('/admin/produk');
     return { success: true };
   } catch {
@@ -56,8 +73,12 @@ export async function deleteProduk(id: number, _imgName: string) {
   }
 }
 
-// 4. Simpan Data & Upload Gambar (Base64)
+// 4. Simpan Data & Upload Gambar (DILINDUNGI ADMIN)
 export async function saveProduk(prevState: unknown, formData: FormData) {
+  // GEMBOK KEAMANAN UTAMA
+  const session = await getAdminSession();
+  if (!session) return { error: 'Akses ditolak: Sesi tidak valid.' };
+
   const id = formData.get('id_produk') as string;
   const nama_produk = formData.get('nama_produk') as string;
   const id_kategori = formData.get('id_kategori') as string;
@@ -68,26 +89,30 @@ export async function saveProduk(prevState: unknown, formData: FormData) {
   const foto = formData.get('foto') as File | null;
   let foto_lama = formData.get('foto_lama') as string;
 
-  // Proses Convert Jika Ada File Gambar Baru
+  // PROSES KEAMANAN & UPLOAD FILE
   if (foto && foto.size > 0) {
-    // Batasi ukuran maksimal 1MB (1048576 bytes) agar Database aman
+    // 1. Validasi Ukuran (Maks 1MB)
     if (foto.size > 1048576) {
-      throw new Error("Ukuran file melebihi 1MB");
+      throw new Error("Ukuran file melebihi batas 1MB");
     }
     
-    // Konversi file fisik menjadi teks Base64 lalu timpa variabel foto_lama
+    // 2. Validasi MIME Type (Cegah Injeksi Script!)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(foto.type)) {
+      throw new Error("Tipe file tidak diizinkan. Gunakan JPG, PNG, atau WEBP.");
+    }
+    
+    // Konversi aman
     foto_lama = await fileToBase64(foto);
   }
 
   try {
     if (id) {
-      // INFO: Kueri persis seperti buatan Anda, lengkap dengan `gender`
       await pool.query<ResultSetHeader>(
         'UPDATE tb_produk SET id_kategori=?, nama_produk=?, harga=?, deskripsi=?, gender=?, foto_produk=? WHERE id_produk=?',
         [id_kategori, nama_produk, harga, deskripsi, gender, foto_lama, id]
       );
     } else {
-      // INFO: Kueri persis seperti buatan Anda, lengkap dengan `created_at` (NOW()) dan `gender`
       await pool.query<ResultSetHeader>(
         'INSERT INTO tb_produk (id_kategori, nama_produk, harga, deskripsi, foto_produk, created_at, gender) VALUES (?, ?, ?, ?, ?, NOW(), ?)',
         [id_kategori, nama_produk, harga, deskripsi, foto_lama, gender]
@@ -97,7 +122,7 @@ export async function saveProduk(prevState: unknown, formData: FormData) {
     revalidatePath('/admin/produk');
     return { success: true };
   } catch (err) {
-    console.error(err);
+    console.error("Save Produk Error:", err);
     return { error: 'Gagal menyimpan data produk.' };
   }
 }

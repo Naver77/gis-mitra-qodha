@@ -14,10 +14,17 @@ export async function getHeroProducts() {
 
 export async function getBestSellers(limit: number = 6) {
   try {
-    // Mengambil produk secara acak sebagai best seller tiruan (seperti di PHP Anda)
-    const [rows] = await pool.query<RowDataPacket[]>(`SELECT * FROM tb_produk ORDER BY RAND() LIMIT ${limit}`);
+    // Catatan Dosen (TODO): ORDER BY RAND() berat untuk tabel besar. 
+    // Pertimbangkan caching atau logika random ID jika data sudah mencapai ribuan.
+    
+    // PERBAIKAN: Gunakan parameter (?) untuk mencegah potensi manipulasi struktur query
+    const [rows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM tb_produk ORDER BY RAND() LIMIT ?',
+      [Number(limit)] // Memastikan nilai murni berjenis angka (integer)
+    );
     return rows;
-  } catch {
+  } catch (error) {
+    console.error("GET Best Sellers Error:", error);
     return [];
   }
 }

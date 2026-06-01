@@ -30,109 +30,119 @@ interface GeoJsonData {
 
 const normalizeCityName = (name: string | undefined) => {
   if (!name) return '';
-  return name
-    .toLowerCase()
-    .replace(/^(kota|kabupaten|kab\.|adm\.)\s+/g, '') 
-    .trim(); 
+  let clean = name.toLowerCase().trim();
+  
+  clean = clean.replace(/^(kota\s+administrasi|adm\.|administrasi)\s+/gi, 'kota ');
+  clean = clean.replace(/^(kabupaten\s+administrasi|kab\.)\s+/gi, 'kabupaten ');
+  clean = clean.replace(/^dki\s+/gi, '');
+  
+  return clean.replace(/\s+/g, ' ').trim(); 
 };
 
 function MapEventController({ setZoomLevel }: { setZoomLevel: (z: number) => void }) {
-  const map = useMapEvents({
-    zoomend: () => setZoomLevel(map.getZoom()),
-  });
+  const map = useMapEvents({ zoomend: () => setZoomLevel(map.getZoom()) });
   return null;
 }
 
-// FIX CRITICAL LEAFLET: Meresize otomatis beberapa kali saat komponen dimuat
 function MapResizer() {
   const map = useMap();
   useEffect(() => {
-    // Trik tembak paksa agar ukuran tidak pernah 0
     const timeouts = [100, 500, 1000].map(ms => setTimeout(() => map.invalidateSize(), ms));
     const handleResize = () => map.invalidateSize();
     window.addEventListener('resize', handleResize);
-    
-    return () => {
-      timeouts.forEach(clearTimeout);
-      window.removeEventListener('resize', handleResize);
-    }
+    return () => { timeouts.forEach(clearTimeout); window.removeEventListener('resize', handleResize); }
   }, [map]);
   return null;
 }
 
+function MapPanController({ activeMarker, processedMitra }: { activeMarker: string | null; processedMitra: Mitra[] }) {
+  const map = useMap(); 
+  useEffect(() => {
+    if (activeMarker) {
+      const targetMitra = processedMitra.find(m => String(m.id) === String(activeMarker));
+      if (targetMitra) {
+        map.flyTo([targetMitra.lat, targetMitra.lng], 15, { animate: true, duration: 1.5, easeLinearity: 0.25 });
+      }
+    }
+  }, [activeMarker, processedMitra, map]);
+  return null; 
+}
+
 export default function MapView({
-  processedMitra,
-  mapCenter,
-  userLoc,
-  activeMarker,
-  handlePartnerClick,
-  triggerContactModal
+  processedMitra, mapCenter, userLoc, activeMarker, handlePartnerClick, triggerContactModal
 }: MapViewProps) {
   
   const [geoJsonData, setGeoJsonData] = useState<GeoJsonData | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(12); 
-  // TAMBAHAN STATE UNTUK REKAP KOTA (Menggantikan useMemo yang berat)
   const [cityMitraCounts, setCityMitraCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    // LEVEL 3 OPTIMIZATION: Ambil GeoJSON dan Data Rekap API secara BERSAMAAN (Paralel)
-    // Jauh lebih cepat daripada menghitung satu per satu koordinat di browser pengguna
     Promise.all([
-      fetch('/assets/geojson/batas_kabupaten.geojson').then((res) => {
-        if (!res.ok) throw new Error("Gagal load GeoJSON");
-        return res.json();
-      }),
-      fetch('/api/mitra-summary').then((res) => res.json())
-    ])
-    .then(([geoData, summaryData]) => {
+      fetch('/assets/geojson/batas_kabupaten.geojson').then(res => res.json()),
+      fetch(`/api/mitra-summary?t=${new Date().getTime()}`).then(res => res.json())
+    ]).then(([geoData, summaryData]) => {
       setGeoJsonData(geoData);
-      setCityMitraCounts(summaryData); // Menyimpan rekap O(1) Instan
-    })
-    .catch((err) => console.error("Map Data Fetch Error:", err));
+      setCityMitraCounts(summaryData); 
+    }).catch(err => console.error("Map Fetch Error:", err));
   }, []);
 
-  const getFeatureStyle = (feature: GeoJsonFeature) => {
-    const rawWADMKK = feature.properties?.WADMKK || '';
-    const cleanFeatureName = normalizeCityName(rawWADMKK);
+  // FITUR ANTI DUPLIKAT KOTA/KABUPATEN
+  const getMitraCountForFeature = (rawWADMKK: string) => {
+    const geoName = normalizeCityName(rawWADMKK); // Cth: "kota bekasi" atau "kabupaten bekasi"
+    let mitraCount = cityMitraCounts[geoName];
+
+    // Jika tidak ada kecocokan persis:
+    if (mitraCount === undefined) {
+      const isGeoKota = geoName.startsWith('kota');
+      const baseName = geoName.replace(/^(kota|kabupaten)\s+/g, '').trim(); // Cth: hapus 'kota', sisa 'bekasi'
+
+      // Apakah di Database admin menginput nama dasar (misal: "bekasi" atau "jakarta selatan")
+      if (cityMitraCounts[baseName] !== undefined) {
+        // ATURAN PENTING: Jika namanya ambigu (hanya "bekasi"), berikan angkanya hanya ke "Kota Bekasi".
+        // Jangan berikan angkanya ke "Kabupaten Bekasi" agar tidak ada duplikasi fiktif.
+        if (isGeoKota || !geoName.includes('kabupaten')) {
+          mitraCount = cityMitraCounts[baseName];
+        }
+      }
+    }
     
-    // Mengambil nilai instan dari API tanpa perlu looping (SANGAT RINGAN)
-    const mitraCount = cityMitraCounts[cleanFeatureName] || 0;
+    return mitraCount || 0;
+  };
 
-    let fillColor = '#9ca3af'; 
-    let fillOpacity = 0.1;
+  const getFeatureStyle = (feature: GeoJsonFeature) => {
+    const count = getMitraCountForFeature(feature.properties?.WADMKK || '');
+    let fillColor = '#9ca3af', fillOpacity = 0.1;
 
-    // Logika pewarnaan kepadatan yang sekarang sudah terhubung dengan data Server
-    if (mitraCount > 0) {
-      if (mitraCount >= 10) fillColor = '#10b981'; // Padat (Hijau)
-      else if (mitraCount >= 4) fillColor = '#fbbf24'; // Sedang (Kuning)
-      else fillColor = '#3b82f6'; // Sedikit (Biru)
-      
+    if (count > 0) {
+      if (count >= 10) fillColor = '#10b981';
+      else if (count >= 4) fillColor = '#fbbf24';
+      else fillColor = '#3b82f6';
       fillOpacity = zoomLevel > 11 ? 0.15 : 0.6; 
     }
-
     return { fillColor, weight: 1.5, opacity: zoomLevel > 11 ? 0.3 : 1, color: '#ffffff', fillOpacity };
   };
 
   const createNumberedIcon = (num: number, level: string, isActive: boolean) => {
-    let colorClass = 'bg-gray-800';
-    if (level === 'Distributor') colorClass = 'bg-yellow-500 text-gray-900';
-    if (level === 'Agen') colorClass = 'bg-emerald-500 text-white';
-    if (level === 'Reseller') colorClass = 'bg-blue-500 text-white';
+    // FIX ESLINT: Ubah 'let' menjadi 'const' karena nilai ini tidak pernah ditimpa lagi
+    const colorClass = level === 'Distributor' 
+      ? 'bg-yellow-500 text-gray-900' 
+      : level === 'Agen' 
+        ? 'bg-emerald-500 text-white' 
+        : 'bg-blue-500 text-white';
+        
     const activeRing = isActive ? 'ring-4 ring-red-500 scale-125 z-50' : '';
-
+    
     return L.divIcon({
       className: 'custom-div-icon',
       html: `<div class="${colorClass} ${activeRing} w-8 h-8 flex items-center justify-center rounded-full font-black shadow-xl border-2 border-white transition-transform transform -translate-y-4 -translate-x-4">${num}</div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32], 
+      iconSize: [32, 32], iconAnchor: [16, 32], 
     });
   };
 
   return (
-    // PETA SEPENUHNYA DIAMANATKAN PADA SISA RUANG FLEKSIBEL (Tanpa Tinggi Spesifik dVH)
     <div className="flex-1 relative w-full h-full bg-gray-200 z-10 overflow-hidden">
       
-      {/* Memaksa elemen Leaflet menempel pada bingkai */}
+      {/* BUNGKUSAN INI YANG SEBELUMNYA HILANG */}
       <div className="absolute inset-0">
         <MapContainer 
           center={[mapCenter.lat, mapCenter.lng]} 
@@ -141,6 +151,9 @@ export default function MapView({
         >
           <MapResizer />
           <MapEventController setZoomLevel={setZoomLevel} />
+          
+          {/* CONTROLLER KAMERA */}
+          <MapPanController activeMarker={activeMarker} processedMitra={processedMitra} />
 
           <TileLayer
             attribution='&copy; <a href="https://carto.com/">CARTO</a>'
@@ -149,18 +162,15 @@ export default function MapView({
           
           {geoJsonData && (
             <GeoJSON 
+              key={Object.keys(cityMitraCounts).length} 
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               data={geoJsonData as any} 
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               style={getFeatureStyle as any} 
               onEachFeature={(feature: GeoJsonFeature, layer: L.Layer) => {
                 const rawWADMKK = feature.properties?.WADMKK || '';
-                const cleanName = normalizeCityName(rawWADMKK);
-                
-                // Mengambil nilai dari Object API untuk Tooltip (Instan)
-                const count = cityMitraCounts[cleanName] || 0;
-                
-                // Tooltip Info Kepadatan
+                // Menggunakan fungsi pintar untuk menampilkan angka di Tooltip
+                const count = getMitraCountForFeature(rawWADMKK);
                 layer.bindTooltip(`<b>${rawWADMKK}</b><br/>${count} Mitra Aktif`, { sticky: true });
               }}
             />
@@ -188,6 +198,13 @@ export default function MapView({
                   position={[mitra.lat, mitra.lng]} 
                   icon={icon}
                   eventHandlers={{ click: () => handlePartnerClick(String(mitra.id)) }}
+                  ref={(markerRef) => {
+                    if (markerRef && activeMarker === String(mitra.id)) {
+                      setTimeout(() => {
+                        markerRef.openPopup();
+                      }, 1500);
+                    }
+                  }}
                 >
                   <Popup>
                     <div className="text-center p-1 w-40">
@@ -195,12 +212,16 @@ export default function MapView({
                         {mitra.level}
                       </span>
                       <h4 className="font-bold text-gray-900 mb-1 leading-tight">{mitra.nama_toko}</h4>
-                      {mitra.distance !== undefined && <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">{mitra.distance.toFixed(2)} KM dari Anda</p>}
+                      {mitra.distance !== undefined && (
+                        <p className="text-[10px] font-bold text-brand-gold mb-2 bg-yellow-50 rounded-full inline-block px-2 py-0.5 border border-yellow-200">
+                          {mitra.distance.toFixed(2)} KM dari Anda
+                        </p>
+                      )}
                       <button 
                         onClick={(e) => { e.stopPropagation(); triggerContactModal(mitra, mitra.distance); }} 
                         className="w-full text-xs bg-gray-900 text-white px-3 py-2.5 rounded-lg font-bold hover:bg-brand-gold hover:text-gray-900 transition-colors block mt-2"
                       >
-                        Hubungi Pusat
+                        Hubungi
                       </button>
                     </div>
                   </Popup>
@@ -219,7 +240,8 @@ export default function MapView({
             </Marker>
           )}
         </MapContainer>
-      </div>
+      </div> 
+      {/* PENUTUP BUNGKUSAN MAP (absolute inset-0) ADA DI SINI */}
 
       {/* LEGENDA AMAN DARI SCROLL TERSEMBUNYI */}
       <div className="absolute bottom-8 right-4 z-1000 flex flex-col gap-2 pointer-events-none items-end">

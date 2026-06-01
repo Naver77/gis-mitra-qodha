@@ -1,19 +1,8 @@
 "use client";
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-// Fix icon issue Next.js
-const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-});
 
 interface MapPickerProps {
   lat: number;
@@ -22,7 +11,6 @@ interface MapPickerProps {
   setLng: (val: number) => void;
 }
 
-// 1. Komponen Events dipisah agar tidak re-render
 function MapEvents({ setLat, setLng }: { setLat: (lat: number) => void, setLng: (lng: number) => void }) {
   useMapEvents({
     click(e) {
@@ -33,7 +21,6 @@ function MapEvents({ setLat, setLng }: { setLat: (lat: number) => void, setLng: 
   return null;
 }
 
-// 2. Komponen Auto-Fly (Agar peta bergeser kalau kordinat berubah)
 function MapUpdater({ lat, lng }: { lat: number, lng: number }) {
   const map = useMap();
   useEffect(() => {
@@ -45,9 +32,21 @@ function MapUpdater({ lat, lng }: { lat: number, lng: number }) {
 }
 
 export default function MapPicker({ lat, lng, setLat, setLng }: MapPickerProps) {
-  // Jika koordinat belum diisi (0,0), arahkan ke tengah Indonesia
   const centerLat = lat === 0 ? -2.5 : lat;
   const centerLng = lng === 0 ? 118.0 : lng;
+
+  // PERBAIKAN: Pindahkan L.icon ke dalam useMemo agar aman dari SSR Next.js
+  const defaultIcon = useMemo(() => {
+    // Memastikan hanya dieksekusi di sisi klien (browser)
+    if (typeof window === 'undefined') return null;
+    return L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+    });
+  }, []);
 
   return (
     <div className="w-full h-full relative z-0">
@@ -64,8 +63,8 @@ export default function MapPicker({ lat, lng, setLat, setLng }: MapPickerProps) 
         <MapEvents setLat={setLat} setLng={setLng} />
         <MapUpdater lat={lat} lng={lng} />
 
-        {/* Marker pintar Anda yang bisa di-drag! */}
-        {lat !== 0 && lng !== 0 && (
+        {/* Gunakan ikon hanya jika sudah di-load di klien */}
+        {lat !== 0 && lng !== 0 && defaultIcon && (
           <Marker 
             position={[lat, lng]} 
             draggable={true}
@@ -81,8 +80,7 @@ export default function MapPicker({ lat, lng, setLat, setLng }: MapPickerProps) 
           />
         )}
       </MapContainer>
-
-      {/* Instruksi UI melayang */}
+      
       <div className="absolute top-2 right-2 z-1000 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-md text-xs font-bold text-gray-700 pointer-events-none">
         <i className="fa-solid fa-hand-pointer text-brand-gold mr-1"></i> Klik atau Geser Pin Merah
       </div>

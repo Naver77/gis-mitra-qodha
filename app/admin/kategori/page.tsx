@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useCallback } from 'react';
 import { getKategoriList, deleteKategori, saveKategori } from './actions';
+import { useAdmin } from '../AdminProvider'; // <-- IMPORT RBAC
 
 interface KategoriItem {
   id_kategori: string;
@@ -8,6 +9,8 @@ interface KategoriItem {
 }
 
 export default function KategoriPage() {
+  const { role } = useAdmin(); // <-- PANGGIL ROLE ADMIN
+  
   const [kategoris, setKategoris] = useState<KategoriItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
@@ -15,20 +18,26 @@ export default function KategoriPage() {
   const [isPending, startTransition] = useTransition();
   const [editingId, setEditingId] = useState<string | null>(null);
   
+  // STATE BARU UNTUK DROPDOWN MENU
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({ nama_kategori: '' });
 
   const [toast, setToast] = useState<{ show: boolean; msg: string; type: 'success' | 'error' }>({ show: false, msg: '', type: 'success' });
-  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+  
+  // FIX: Bungkus dengan useCallback agar linter React bahagia
+  const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ show: true, msg, type });
     setTimeout(() => setToast({ show: false, msg: '', type: 'success' }), 3000);
-  };
+  }, []);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(kategoris.length / itemsPerPage) || 1;
   const currentData = kategoris.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const loadData = async () => {
+  // FIX: Bungkus dengan useCallback dan masukkan showToast ke dependency
+  const loadData = useCallback(async () => {
     setIsLoadingData(true);
     try {
       const data = await getKategoriList();
@@ -39,12 +48,12 @@ export default function KategoriPage() {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [showToast]);
 
+  // FIX: useEffect sekarang bersih tanpa perlu di-disable linternya
   useEffect(() => {
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadData]);
 
   const handleAdd = () => {
     setEditingId(null);
@@ -96,7 +105,6 @@ export default function KategoriPage() {
     }
   };
 
-  // MENGGUNAKAN REACT FRAGMENT (<>) AGAR MODAL BEBAS DARI JEBAKAN ANIMASI
   return (
     <>
       <div className="p-4 md:p-8 animate-fade-in-up relative">
@@ -134,33 +142,62 @@ export default function KategoriPage() {
 
         <div className="bg-white rounded-3xl shadow-lg border border-gray-200 flex flex-col w-full lg:w-2/3 overflow-hidden">
           <div className="h-4 bg-gray-900 w-full"></div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto min-h-64">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-900 border-b border-gray-800 text-gray-300 font-bold tracking-widest uppercase text-[10px]">
                 <tr>
                   <th className="px-6 py-4 w-16 text-center border-x border-gray-800">No</th>
-                  <th className="px-6 py-4 w-24 text-center border-x border-gray-800">ID DB</th>
                   <th className="px-6 py-4 border-x border-gray-800">Nama Kategori</th>
                   <th className="px-6 py-4 text-center w-28 border-x border-gray-800">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm font-medium bg-white">
                 {isLoadingData ? (
-                  <tr><td colSpan={4} className="p-10 text-center text-gray-400 font-bold animate-pulse border-x border-gray-100">Memuat Data dari Database...</td></tr>
+                  <tr><td colSpan={3} className="p-10 text-center text-gray-400 font-bold animate-pulse border-x border-gray-100">Memuat Data dari Database...</td></tr>
                 ) : currentData.length === 0 ? (
-                  <tr><td colSpan={4} className="p-10 text-center text-gray-400 font-bold italic border-x border-gray-100">Belum ada data kategori.</td></tr>
+                  <tr><td colSpan={3} className="p-10 text-center text-gray-400 font-bold italic border-x border-gray-100">Belum ada data kategori.</td></tr>
                 ) : (
                   currentData.map((row, idx) => (
                     <tr key={row.id_kategori} className="hover:bg-blue-50/10 transition">
                       <td className="px-6 py-4 text-center text-gray-400 font-bold border-x border-gray-100">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                      <td className="px-6 py-4 text-center text-gray-400 font-mono font-bold text-[10px] border-x border-gray-100">#{row.id_kategori}</td>
                       <td className="px-6 py-4 font-bold text-gray-900 text-base border-x border-gray-100">{row.nama_kategori}</td>
-                      <td className="px-6 py-4 border-x border-gray-100">
-                        <div className="flex justify-center gap-2">
-                          <button onClick={() => handleEdit(row)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition flex items-center justify-center" title="Edit"><i className="fa-solid fa-pen text-xs"></i></button>
-                          <button onClick={() => handleDelete(row.id_kategori)} disabled={isPending} className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition flex items-center justify-center disabled:opacity-50" title="Hapus"><i className="fa-solid fa-trash text-xs"></i></button>
+                      
+                      {/* FIX: MENERAPKAN MENU TITIK TIGA DI KATEGORI */}
+                      <td className="px-6 py-4 text-center border-x border-gray-100 relative">
+                        <div className="flex justify-center">
+                          <button 
+                            onClick={() => setActiveDropdown(activeDropdown === String(row.id_kategori) ? null : String(row.id_kategori))}
+                            className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition flex items-center justify-center focus:outline-none"
+                          >
+                            <i className="fa-solid fa-ellipsis-vertical"></i>
+                          </button>
+
+                          {activeDropdown === String(row.id_kategori) && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setActiveDropdown(null)}></div>
+                              <div className="absolute right-12 top-4 w-36 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-zoom-in">
+                                <button 
+                                  onClick={() => { handleEdit(row); setActiveDropdown(null); }} 
+                                  className="w-full text-left px-4 py-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3"
+                                >
+                                  <i className="fa-solid fa-pen"></i> Edit
+                                </button>
+                                
+                                {/* HANYA SUPER ADMIN YANG BISA HAPUS */}
+                                {role === 'Super Admin' && (
+                                  <button 
+                                    onClick={() => { handleDelete(row.id_kategori); setActiveDropdown(null); }} 
+                                    className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-3 border-t border-gray-100"
+                                  >
+                                    <i className="fa-solid fa-trash"></i> Hapus
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </td>
+
                     </tr>
                   ))
                 )}
@@ -183,7 +220,6 @@ export default function KategoriPage() {
         </div>
       </div>
 
-      {/* POSISI MODAL SEKARANG DI LUAR DIV UTAMA, Z-INDEX SUPER TINGGI */}
       {isModalOpen && (
         <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: 'rgba(17, 24, 39, 0.8)', backdropFilter: 'blur(8px)' }}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[95vh] flex flex-col animate-zoom-in overflow-hidden relative">

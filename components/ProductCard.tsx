@@ -26,10 +26,10 @@ export default function ProductCard({ id, nama, harga, foto, isBestSeller = fals
   };
 
   return (
-    <div className="flex-shrink-0 w-44 md:w-56 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-brand-gold transition-all duration-300 group h-full flex flex-col snap-center relative overflow-hidden">
+    <div className="shrink-0 w-44 md:w-56 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-brand-gold transition-all duration-300 group h-full flex flex-col snap-center relative overflow-hidden">
       
       {/* Area Gambar */}
-      <div className="aspect-[4/5] bg-gray-50 overflow-hidden relative">
+      <div className="aspect-4/5 bg-gray-50 overflow-hidden relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src={imgUrl} 
@@ -55,7 +55,7 @@ export default function ProductCard({ id, nama, harga, foto, isBestSeller = fals
       </div>
 
       {/* Area Detail Text */}
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col grow">
         <h4 className="font-bold text-gray-800 text-sm mb-1 line-clamp-2 group-hover:text-brand-gold transition-colors leading-snug">
           {nama}
         </h4>

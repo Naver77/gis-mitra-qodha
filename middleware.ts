@@ -1,30 +1,46 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // 1. Sisipkan informasi URL saat ini ke Header
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-current-path', path);
 
-  // 2. Baca Karcis (Cookie) dengan nama yang SAMA PERSIS dengan di auth.ts
+  // PERBAIKAN 1: Sesuaikan pengecualian ke rute login yang sebenarnya
+  if (path === '/admin/login') {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
   const token = request.cookies.get('admin_session')?.value;
 
-  // 3. Jika mencoba masuk area Admin (selain login) TANPA Karcis, tendang!
-  if (!token && path.startsWith('/admin') && path !== '/admin/login') {
+  // PERBAIKAN 2: Arahkan ke /admin/login jika tidak ada token
+  if (!token) {
     return NextResponse.redirect(new URL('/admin/login', request.url));
   }
 
-  // 4. Jika punya Karcis atau bukan di area Admin, silakan lewat
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    await jwtVerify(token, secret);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
+  } catch {
+    // PERBAIKAN 3: Arahkan kembali ke /admin/login jika token invalid/expired
+    console.warn('[SECURITY] Upaya akses ditolak: Token tidak valid atau kedaluwarsa.');
+    
+    const response = NextResponse.redirect(new URL('/admin/login', request.url));
+    response.cookies.delete('admin_session');
+    
+    return response;
+  }
 }
 
-// Jaga ketat area admin
 export const config = {
   matcher: ['/admin/:path*'],
 };

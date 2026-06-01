@@ -1,9 +1,30 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
-// 1. GET: TAMPILKAN DATA KE ADMIN (Dengan Join ke tb_mitra jika ada target mitra)
+// FITUR KEAMANAN: Fungsi Helper untuk mengecek Sesi Admin
+async function isAdmin() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_session')?.value;
+  if (!token) return false;
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// 1. GET (DILINDUNGI): TAMPILKAN DATA KE ADMIN
 export async function GET() {
+  // GEMBOK KEAMANAN
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: 'Akses Ditolak: Sesi Tidak Valid' }, { status: 401 });
+  }
+
   try {
     const [rows] = await pool.query<RowDataPacket[]>(`
       SELECT 
@@ -20,21 +41,26 @@ export async function GET() {
   }
 }
 
-// 2. POST: SIMPAN DARI FORM PUBLIK
+// 2. POST (TERBUKA): SIMPAN DARI FORM PUBLIK
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { nama_prospek, no_whatsapp, sumber_halaman, id_mitra_target, konteks_pesan } = body;
 
-    // Bersihkan nomor WA (hapus +, spasi, strip)
-    let cleanWa = no_whatsapp.replace(/\D/g, '');
+    // FAKTA KEAMANAN: Sanitasi Dasar (Anti-XSS & Anti-Truncate)
+    // Cegah injeksi HTML/Script dengan membuang kurung siku < dan >
+    const safeNama = (nama_prospek || 'Anonim').toString().replace(/[<>]/g, '');
+    const safeKonteks = (konteks_pesan || '').toString().replace(/[<>]/g, '').substring(0, 500); // Batasi maksimal 500 karakter
+
+    // Bersihkan nomor WA
+    let cleanWa = (no_whatsapp || '').toString().replace(/\D/g, '');
     if (cleanWa.startsWith('0')) cleanWa = '62' + cleanWa.substring(1); 
 
     await pool.query<ResultSetHeader>(
       `INSERT INTO tb_leads_prospek 
         (nama_prospek, no_whatsapp, sumber_halaman, id_mitra_target, konteks_pesan, waktu_klik, status_lead) 
-       VALUES (?, ?, ?, ?, ?, NOW(), 'Baru')`,
-      [nama_prospek, cleanWa, sumber_halaman, id_mitra_target || null, konteks_pesan]
+       VALUES (?, ?, ?, ?, ?, NOW(), 'Belum Dibalas')`, // FIX: Ingat ENUM Anda sudah diganti jadi 'Belum Dibalas'!
+      [safeNama, cleanWa, sumber_halaman, id_mitra_target || null, safeKonteks]
     );
 
     return NextResponse.json({ message: 'Prospek berhasil dicatat' }, { status: 201 });
@@ -44,8 +70,13 @@ export async function POST(req: Request) {
   }
 }
 
-// 3. PUT: UPDATE STATUS OLEH ADMIN
+// 3. PUT (DILINDUNGI): UPDATE STATUS OLEH ADMIN
 export async function PUT(req: Request) {
+  // GEMBOK KEAMANAN
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: 'Akses Ditolak: Sesi Tidak Valid' }, { status: 401 });
+  }
+
   try {
     const { id_lead, status_lead } = await req.json();
     await pool.query<ResultSetHeader>(

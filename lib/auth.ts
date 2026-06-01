@@ -1,4 +1,4 @@
-'use server'; 
+'use server';
 
 import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
@@ -6,7 +6,12 @@ import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 import { RowDataPacket } from 'mysql2';
 
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'qodha-aromatic-rahasia-skripsi-s1');
+// PERBAIKAN: Hapus hardcode string. Wajibkan keberadaan variabel environment.
+const jwtSecretString = process.env.JWT_SECRET;
+if (!jwtSecretString) {
+  throw new Error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+}
+const SECRET_KEY = new TextEncoder().encode(jwtSecretString);
 
 export async function loginAdmin(prevState: unknown, formData: FormData) {
   const username = formData.get('username') as string;
@@ -18,36 +23,33 @@ export async function loginAdmin(prevState: unknown, formData: FormData) {
 
   try {
     const [rows] = await pool.query<RowDataPacket[]>(
-      'SELECT * FROM tb_admin WHERE username = ? LIMIT 1', 
+      'SELECT * FROM tb_admin WHERE username = ? LIMIT 1',
       [username]
     );
-    
+
+    // PERBAIKAN: Gunakan pesan error yang sama untuk menghindari User Enumeration
     if (rows.length === 0) {
-      return { error: 'Username tidak terdaftar!' };
+      return { error: 'Username atau Password salah!' };
     }
 
     const admin = rows[0];
 
-    // 1. Verifikasi Password dengan Bcrypt
     const isPasswordMatch = await bcrypt.compare(password, admin.password);
 
     if (isPasswordMatch) {
-      // --- LOGIN SUKSES ---
-      // FIX UTAMA: Nama kolom disesuaikan menjadi 'last_login' sesuai database Anda
       await pool.query('UPDATE tb_admin SET last_login = NOW() WHERE id_admin = ?', [admin.id_admin]);
 
-      // Buat Session Token (JWT)
-      const token = await new SignJWT({ 
-        id_admin: admin.id_admin, 
-        nama: admin.nama_lengkap, 
-        role: 'admin' 
+      // Di dalam lib/auth.ts, ubah bagian pembuatan token ini:
+      const token = await new SignJWT({
+        id_admin: admin.id_admin,
+        nama: admin.nama_lengkap,
+        role: admin.role // <-- MENGAMBIL DARI DATABASE ('Super Admin' atau 'Admin')
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
-        .setExpirationTime('24h') // Berlaku 1 Hari
+        .setExpirationTime('3d') // <-- Ubah menjadi 3d (3 days)
         .sign(SECRET_KEY);
 
-      // FIX: Cara mengatur cookies yang benar dan aman di Next.js App Router
       const cookieStore = await cookies();
       cookieStore.set({
         name: 'admin_session',
@@ -55,25 +57,20 @@ export async function loginAdmin(prevState: unknown, formData: FormData) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/', // Sangat penting agar bisa dibaca di seluruh web
-        maxAge: 60 * 60 * 24 // 1 Hari
+        path: '/',
+        maxAge: 60 * 60 * 24 * 3 // <-- 3 Hari (Detik * Menit * Jam * Hari)
       });
 
       return { success: true };
-    } 
-    
-    // --- FITUR AUTO FIX (Upgrade Skripsi dari MD5/Plain Text ke Bcrypt) ---
-    // Jika password yang diketik adalah 'admin123', kita paksa reset di DB!
-    else if (password === 'admin123') {
-      const newHash = await bcrypt.hash('admin123', 10);
-      await pool.query('UPDATE tb_admin SET password = ? WHERE id_admin = ?', [newHash, admin.id_admin]);
-      return { error: 'Sistem Keamanan Bcrypt diperbarui. Silakan klik MASUK sekali lagi!' };
     }
 
-    return { error: 'Password salah!' };
+    // PERBAIKAN: Fitur "Auto Fix" dihapus karena merupakan celah pembajakan akun.
+    // Tetap kembalikan pesan error generic.
+    return { error: 'Username atau Password salah!' };
 
   } catch (error) {
-    console.error('CRITICAL LOGIN ERROR:', error);
-    return { error: 'Gagal terhubung ke Database. Hubungi Developer.' };
+    // Log error di server saja, jangan ekspos detail query gagal ke user
+    console.error('[AUTH_ERROR] Gagal melakukan autentikasi:', error);
+    return { error: 'Terjadi kesalahan sistem. Silakan coba beberapa saat lagi.' };
   }
 }

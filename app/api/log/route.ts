@@ -1,26 +1,32 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { ResultSetHeader } from 'mysql2';
 
+// API Khusus Analitik Publik (Menghitung Views Produk)
 export async function POST(request: Request) {
   try {
-    // Membaca payload (body) yang dikirim dari Frontend (Fetch API)
     const body = await request.json();
-    const { type, id } = body;
+    const { id_produk } = body;
 
-    if (!type || !id) {
-      return NextResponse.json({ error: 'Data tidak valid' }, { status: 400 });
+    // 1. Validasi Input
+    if (!id_produk || isNaN(Number(id_produk))) {
+      return NextResponse.json({ error: 'ID Produk tidak valid' }, { status: 400 });
     }
 
-    // Insert ke tabel tb_log_aktivitas
-    await pool.query(
-      'INSERT INTO tb_log_aktivitas (tipe_log, id_ref, created_at) VALUES (?, ?, NOW())',
-      [type, id]
+    // 2. Operasi Atomic Update: Sangat ringan dan cepat!
+    // Alih-alih membuat baris baru, kita cukup tambahkan +1 ke kolom 'views'
+    const [result] = await pool.query<ResultSetHeader>(
+      'UPDATE tb_produk SET views = views + 1 WHERE id_produk = ?',
+      [Number(id_produk)]
     );
 
-    return NextResponse.json({ success: true });
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: 'Produk tidak ditemukan' }, { status: 404 });
+    }
 
-  } catch (error) {
-    console.error('Error saving log:', error);
+    return NextResponse.json({ success: true, message: 'View recorded' });
+
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
