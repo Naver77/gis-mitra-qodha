@@ -28,9 +28,16 @@ interface GeoJsonData {
   features: GeoJsonFeature[];
 }
 
+// FIX 1: FUNGSI NORMALISASI YANG SINKRON DENGAN BACKEND (LEBUR JAKARTA)
 const normalizeCityName = (name: string | undefined) => {
   if (!name) return '';
   let clean = name.toLowerCase().trim();
+  
+  // Tangkap semua wilayah pecahan Jakarta dari GeoJSON (misal: "Kota Jakarta Selatan") 
+  // lalu paksa menjadi satu kunci pembacaan: 'dki jakarta'
+  if (clean.includes('jakarta') || clean === 'dki') {
+    return 'dki jakarta';
+  }
   
   clean = clean.replace(/^(kota\s+administrasi|adm\.|administrasi)\s+/gi, 'kota ');
   clean = clean.replace(/^(kabupaten\s+administrasi|kab\.)\s+/gi, 'kabupaten ');
@@ -86,20 +93,15 @@ export default function MapView({
     }).catch(err => console.error("Map Fetch Error:", err));
   }, []);
 
-  // FITUR ANTI DUPLIKAT KOTA/KABUPATEN
   const getMitraCountForFeature = (rawWADMKK: string) => {
-    const geoName = normalizeCityName(rawWADMKK); // Cth: "kota bekasi" atau "kabupaten bekasi"
+    const geoName = normalizeCityName(rawWADMKK); // Cth: "kota bekasi" atau "dki jakarta"
     let mitraCount = cityMitraCounts[geoName];
 
-    // Jika tidak ada kecocokan persis:
     if (mitraCount === undefined) {
       const isGeoKota = geoName.startsWith('kota');
-      const baseName = geoName.replace(/^(kota|kabupaten)\s+/g, '').trim(); // Cth: hapus 'kota', sisa 'bekasi'
+      const baseName = geoName.replace(/^(kota|kabupaten)\s+/g, '').trim();
 
-      // Apakah di Database admin menginput nama dasar (misal: "bekasi" atau "jakarta selatan")
       if (cityMitraCounts[baseName] !== undefined) {
-        // ATURAN PENTING: Jika namanya ambigu (hanya "bekasi"), berikan angkanya hanya ke "Kota Bekasi".
-        // Jangan berikan angkanya ke "Kabupaten Bekasi" agar tidak ada duplikasi fiktif.
         if (isGeoKota || !geoName.includes('kabupaten')) {
           mitraCount = cityMitraCounts[baseName];
         }
@@ -123,7 +125,6 @@ export default function MapView({
   };
 
   const createNumberedIcon = (num: number, level: string, isActive: boolean) => {
-    // FIX ESLINT: Ubah 'let' menjadi 'const' karena nilai ini tidak pernah ditimpa lagi
     const colorClass = level === 'Distributor' 
       ? 'bg-yellow-500 text-gray-900' 
       : level === 'Agen' 
@@ -141,8 +142,6 @@ export default function MapView({
 
   return (
     <div className="flex-1 relative w-full h-full bg-gray-200 z-10 overflow-hidden">
-      
-      {/* BUNGKUSAN INI YANG SEBELUMNYA HILANG */}
       <div className="absolute inset-0">
         <MapContainer 
           center={[mapCenter.lat, mapCenter.lng]} 
@@ -151,8 +150,6 @@ export default function MapView({
         >
           <MapResizer />
           <MapEventController setZoomLevel={setZoomLevel} />
-          
-          {/* CONTROLLER KAMERA */}
           <MapPanController activeMarker={activeMarker} processedMitra={processedMitra} />
 
           <TileLayer
@@ -169,9 +166,11 @@ export default function MapView({
               style={getFeatureStyle as any} 
               onEachFeature={(feature: GeoJsonFeature, layer: L.Layer) => {
                 const rawWADMKK = feature.properties?.WADMKK || '';
-                // Menggunakan fungsi pintar untuk menampilkan angka di Tooltip
                 const count = getMitraCountForFeature(rawWADMKK);
-                layer.bindTooltip(`<b>${rawWADMKK}</b><br/>${count} Mitra Aktif`, { sticky: true });
+                
+                // Trik Visual: Menampilkan nama "DKI Jakarta" secara elegan di Tooltip
+                const displayName = normalizeCityName(rawWADMKK) === 'dki jakarta' ? 'DKI Jakarta' : rawWADMKK;
+                layer.bindTooltip(`<b>${displayName}</b><br/>${count} Mitra Aktif`, { sticky: true });
               }}
             />
           )}
@@ -241,9 +240,7 @@ export default function MapView({
           )}
         </MapContainer>
       </div> 
-      {/* PENUTUP BUNGKUSAN MAP (absolute inset-0) ADA DI SINI */}
 
-      {/* LEGENDA AMAN DARI SCROLL TERSEMBUNYI */}
       <div className="absolute bottom-8 right-4 z-1000 flex flex-col gap-2 pointer-events-none items-end">
         {zoomLevel < 12 && (
           <div className="bg-white/90 backdrop-blur px-3 py-2 rounded-xl shadow-md border border-gray-100 flex flex-col gap-1 text-[10px] font-bold text-gray-600">
